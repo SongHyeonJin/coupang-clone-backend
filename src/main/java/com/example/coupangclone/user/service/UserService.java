@@ -9,6 +9,7 @@ import com.example.coupangclone.user.enums.UserRoleEnum;
 import com.example.coupangclone.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,11 +20,12 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public ResponseEntity<?> signup(SignupRequestDto userRequestDto) {
         String email = userRequestDto.getEmail();
-        String password = userRequestDto.getPassword();
+        String password = passwordEncoder.encode(userRequestDto.getPassword());
         String name = userRequestDto.getName();
         String tel = userRequestDto.getTel();
         String gender = userRequestDto.getGender();
