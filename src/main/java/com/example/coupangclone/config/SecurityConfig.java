@@ -1,6 +1,8 @@
 package com.example.coupangclone.config;
 
 import com.example.coupangclone.auth.jwt.JwtAuthenticationFilter;
+import com.example.coupangclone.global.exception.CustomAccessDeniedHandler;
+import com.example.coupangclone.global.exception.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +25,8 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -39,6 +43,11 @@ public class SecurityConfig {
                                 .requestMatchers("/api/signup", "/api/login").permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
+                        )
+                        .exceptionHandling(exception ->
+                                exception
+                                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                                        .accessDeniedHandler(customAccessDeniedHandler)
                         );
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
