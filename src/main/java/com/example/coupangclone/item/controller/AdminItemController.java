@@ -1,6 +1,7 @@
 package com.example.coupangclone.item.controller;
 
 import com.example.coupangclone.auth.userdetails.UserDetailsImpl;
+import com.example.coupangclone.item.dto.brand.BrandRequestDto;
 import com.example.coupangclone.item.dto.category.CategoryRequestDto;
 import com.example.coupangclone.item.service.AdminItemService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,12 @@ public class AdminItemController {
     public ResponseEntity<?> createCategory(@RequestBody CategoryRequestDto requestDto,
                                             @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return adminItemService.createCategory(requestDto, userDetails.getUser());
+    }
+
+    @PostMapping("/brand")
+    public ResponseEntity<?> createBrand(@RequestBody BrandRequestDto requestDto,
+                                            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return adminItemService.createBrand(requestDto, userDetails.getUser());
     }
 
 }
