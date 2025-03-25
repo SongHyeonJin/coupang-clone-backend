@@ -8,10 +8,13 @@ import lombok.NoArgsConstructor;
 public class ItemRequestDto {
 
     private String name;
+    private int weight;
     private String content;
     private int price;
     private int sale;
-    private int stock;
+    private int saleCnt;
+    private int deliveryTime;
+    private int deliveryPrice;
     private Long categoryId;
     private Long brandId;
 
