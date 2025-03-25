@@ -39,6 +39,7 @@ public class AdminItemService {
         }
         Category category = Category.builder()
                 .name(requestDto.getName())
+                .type(requestDto.getType())
                 .parent(parent)
                 .build();
         categoryRepository.save(category);
