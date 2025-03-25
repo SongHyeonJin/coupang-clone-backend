@@ -14,7 +14,9 @@ public enum ExceptionEnum {
     WRONG_TOKEN(HttpStatus.BAD_REQUEST.value(), "잘못된 JWT 토근입니다.", "JWT"),
     NOT_ALLOW(HttpStatus.FORBIDDEN.value(), "권한이 없습니다.", "USER"),
     NEED_LOGIN(HttpStatus.UNAUTHORIZED.value(), "인증이 필요합니다.", "USER"),
-    CATEGORY_NOT_FOUND(HttpStatus.BAD_REQUEST.value(), "상위 카테고리가 존재하지 않습니다.", "ITEM");
+    CATEGORY_NOT_FOUND(HttpStatus.BAD_REQUEST.value(), "상위 카테고리가 존재하지 않습니다.", "ITEM"),
+    CATEGORY_DUPLICATION(HttpStatus.BAD_REQUEST.value(), "이미 존재하는 카테고리입니다.", "ITEM"),
+    BRAND_DUPLICATION(HttpStatus.BAD_REQUEST.value(), "이미 존재하는 브랜드입니다.", "ITEM");
 
     private final int status;
     private final String msg;
