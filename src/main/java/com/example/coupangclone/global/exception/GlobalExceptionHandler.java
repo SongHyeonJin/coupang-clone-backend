@@ -35,7 +35,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleErrorException(ErrorException e) {
         log.warn("[{} 예외]: {}", e.getExceptionEnum().getMsg());
 
-        ErrorResponseDto errorResponseDto = new ErrorResponseDto(e.getExceptionEnum().getStatus(), e.getExceptionEnum().getMsg());
+        ErrorResponseDto errorResponseDto = new ErrorResponseDto(
+                e.getExceptionEnum().getStatus(), e.getExceptionEnum().getType(), e.getExceptionEnum().getMsg()
+        );
         return ResponseEntity.status(e.getExceptionEnum().getStatus()).body(errorResponseDto);
     }
 
