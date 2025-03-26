@@ -2,8 +2,13 @@ package com.example.coupangclone.item.controller;
 
 import com.example.coupangclone.auth.userdetails.UserDetailsImpl;
 import com.example.coupangclone.item.dto.item.ItemRequestDto;
+import com.example.coupangclone.item.dto.item.ItemResponseDto;
 import com.example.coupangclone.item.service.ItemService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +30,14 @@ public class ItemController {
                                         @RequestPart(value = "images", required = false) List<MultipartFile> images,
                                         @AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
         return itemService.createItem(requestDto, images, userDetails.getUser());
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<ItemResponseDto>> getItems(@PageableDefault(size = 10,
+                                                                           sort = "createdAt",
+                                                                           direction = Sort.Direction.DESC) Pageable pageable,
+                                                          @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return itemService.getItems(pageable, userDetails.getUser());
     }
 
 }
