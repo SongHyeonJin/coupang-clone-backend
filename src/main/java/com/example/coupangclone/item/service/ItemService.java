@@ -5,21 +5,17 @@ import com.example.coupangclone.global.exception.ErrorException;
 import com.example.coupangclone.global.exception.ExceptionEnum;
 import com.example.coupangclone.item.dto.item.ItemRequestDto;
 import com.example.coupangclone.item.dto.item.ItemResponseDto;
-import com.example.coupangclone.item.entity.Brand;
-import com.example.coupangclone.item.entity.Category;
-import com.example.coupangclone.item.entity.Item;
-import com.example.coupangclone.item.entity.ItemImage;
-import com.example.coupangclone.item.enums.ItemTypeEnum;
-import com.example.coupangclone.item.repository.BrandRepository;
-import com.example.coupangclone.item.repository.CategoryRepository;
-import com.example.coupangclone.item.repository.ItemImageRepository;
-import com.example.coupangclone.item.repository.ItemRepository;
+import com.example.coupangclone.item.entity.*;
+import com.example.coupangclone.item.enums.ItemSortType;
+import com.example.coupangclone.item.repository.*;
 import com.example.coupangclone.review.repository.ReviewRepository;
 import com.example.coupangclone.user.entity.User;
 import com.example.coupangclone.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,13 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.NumberFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -46,6 +37,7 @@ public class ItemService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final ReviewRepository reviewRepository;
+    private final SearchLogRepository searchLogRepository;
     private static final String IMAGE_DIR = "C:/Users/Song/Desktop/images/";
     private static final String IMAGE_URL_PREFIX = "/images/";
 
@@ -88,10 +80,17 @@ public class ItemService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Page<ItemResponseDto>> getItems(Pageable pageable, User user) {
+    public ResponseEntity<Page<ItemResponseDto>> getItems(Pageable pageable, User user, String sort) {
         checkUser(user);
 
-        Page<Item> itemPage = itemRepository.findAll(pageable);
+        ItemSortType sortType = ItemSortType.from(sort);
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(sortType.getDirection(), sortType.getProperty())
+        );
+
+        Page<Item> itemPage = itemRepository.findAll(sortedPageable);
 
         Page<ItemResponseDto> responseDto = itemPage.map(item -> {
             String imageUrl = itemImageRepository.findFirstByItemId(item.getId())
@@ -100,7 +99,28 @@ public class ItemService {
 
             double reviewRating = reviewRepository.sumRatingByItemId(item.getId());
             long reviewCnt = reviewRepository.countByItemId(item.getId());
-            double reviewAvgRating = reviewRating / reviewCnt;
+            double reviewAvgRating = reviewCnt == 0 ? 0.0 : reviewRating / reviewCnt;
+
+            return ItemResponseDto.of(item, imageUrl, reviewAvgRating, reviewCnt);
+        });
+
+        return ResponseEntity.ok(responseDto);
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<Page<ItemResponseDto>> searchItems(String keyword, Pageable pageable, User user) {
+        checkUser(user);
+
+        Page<Item> itemPage = itemRepository.searchByNameOrBrand(keyword, pageable);
+
+        Page<ItemResponseDto> responseDto = itemPage.map(item -> {
+            String imageUrl = itemImageRepository.findFirstByItemId(item.getId())
+                    .map(ItemImage::getImage)
+                    .orElse(null);
+
+            double reviewRating = reviewRepository.sumRatingByItemId(item.getId());
+            long reviewCnt = reviewRepository.countByItemId(item.getId());
+            double reviewAvgRating = reviewCnt == 0 ? 0.0 : reviewRating / reviewCnt;
 
             return ItemResponseDto.of(item, imageUrl, reviewAvgRating, reviewCnt);
         });
