@@ -3,7 +3,6 @@ package com.example.coupangclone.item.controller;
 import com.example.coupangclone.auth.userdetails.UserDetailsImpl;
 import com.example.coupangclone.item.dto.item.ItemRequestDto;
 import com.example.coupangclone.item.dto.item.ItemResponseDto;
-import com.example.coupangclone.item.dto.item.SearchItemResponseDto;
 import com.example.coupangclone.item.service.ItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
