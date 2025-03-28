@@ -1,5 +1,6 @@
 package com.example.coupangclone.item.entity;
 
+import com.example.coupangclone.item.enums.ItemTypeEnum;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -18,13 +19,18 @@ public class Category {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ItemTypeEnum type;
+
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Category parent;
 
     @Builder
-    public Category(String name, Category parent) {
+    public Category(String name, ItemTypeEnum type, Category parent) {
         this.name = name;
+        this.type = type;
         this.parent = parent;
     }
 }

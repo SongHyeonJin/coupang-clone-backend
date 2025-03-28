@@ -39,6 +39,7 @@ public class AdminItemService {
         }
         Category category = Category.builder()
                 .name(requestDto.getName())
+                .type(requestDto.getType())
                 .parent(parent)
                 .build();
         categoryRepository.save(category);
@@ -62,7 +63,7 @@ public class AdminItemService {
 
     private static void checkAdmin(User user) {
         if (!user.getRole().equals(UserRoleEnum.ADMIN)) {
-            throw new ErrorException(ExceptionEnum.CATEGORY_NOT_FOUND);
+            throw new ErrorException(ExceptionEnum.PARENT_CATEGORY_NOT_FOUND);
         }
     }
 
