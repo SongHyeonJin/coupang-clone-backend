@@ -37,7 +37,6 @@ public class ItemService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final ReviewRepository reviewRepository;
-    private final SearchLogRepository searchLogRepository;
     private static final String IMAGE_DIR = "C:/Users/Song/Desktop/images/";
     private static final String IMAGE_URL_PREFIX = "/images/";
 
