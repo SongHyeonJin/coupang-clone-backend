@@ -1,5 +1,6 @@
 package com.example.coupangclone.item.service;
 
+import com.example.coupangclone.config.S3Uploader;
 import com.example.coupangclone.global.dto.BasicResponseDto;
 import com.example.coupangclone.global.exception.ErrorException;
 import com.example.coupangclone.global.exception.ExceptionEnum;
@@ -23,11 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -41,8 +40,7 @@ public class ItemService {
     private final ReviewRepository reviewRepository;
     private final SearchLogRepository searchLogRepository;
     private final SearchLogService searchLogService;
-    private static final String IMAGE_DIR = "C:/Users/Song/Desktop/images/";
-    private static final String IMAGE_URL_PREFIX = "/images/";
+    private final S3Uploader s3Uploader;
 
     @Transactional
     public ResponseEntity<?> createItem(ItemRequestDto requestDto,
@@ -60,15 +58,7 @@ public class ItemService {
         List<ItemImage> itemImages = new ArrayList<>();
         if (images != null && !images.isEmpty()) {
             for (MultipartFile image : images) {
-                String fileName = UUID.randomUUID() + "_" + image.getOriginalFilename();
-                File targetFile = new File(IMAGE_DIR, fileName);
-
-                if (!targetFile.getParentFile().exists()) {
-                    targetFile.getParentFile().mkdirs();
-                }
-
-                image.transferTo(targetFile);
-                String imageUrl = IMAGE_URL_PREFIX + fileName;
+                String imageUrl = s3Uploader.upload(image);
 
                 ItemImage itemImage = ItemImage.builder()
                         .image(imageUrl)
