@@ -49,10 +49,15 @@ jobs:
 
       - name: Check built JAR files
         run: ls -alh build/libs
+        
+      - name: Decode application.yml from GitHub Secrets
+        run: |
+          echo "${{ secrets.APPLICATION_YML }}" | base64 --decode > application.yml        
 
       - name: Deploy JAR file to EC2
         run: |
           scp -i ec2_key.pem -o StrictHostKeyChecking=no build/libs/*.jar ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no application.yml ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/
 
   deploy:
     needs: build
