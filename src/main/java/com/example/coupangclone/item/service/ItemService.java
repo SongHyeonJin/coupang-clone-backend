@@ -5,6 +5,7 @@ import com.example.coupangclone.global.exception.ErrorException;
 import com.example.coupangclone.global.exception.ExceptionEnum;
 import com.example.coupangclone.item.dto.item.ItemRequestDto;
 import com.example.coupangclone.item.dto.item.ItemResponseDto;
+import com.example.coupangclone.item.dto.item.SearchItemResponseDto;
 import com.example.coupangclone.item.entity.*;
 import com.example.coupangclone.item.enums.ItemSortType;
 import com.example.coupangclone.item.repository.*;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -37,6 +39,8 @@ public class ItemService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final ReviewRepository reviewRepository;
+    private final SearchLogRepository searchLogRepository;
+    private final SearchLogService searchLogService;
     private static final String IMAGE_DIR = "C:/Users/Song/Desktop/images/";
     private static final String IMAGE_URL_PREFIX = "/images/";
 
@@ -107,8 +111,14 @@ public class ItemService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Page<ItemResponseDto>> searchItems(String keyword, Pageable pageable, User user) {
+    public ResponseEntity<SearchItemResponseDto> searchItems(String keyword, Pageable pageable, User user) {
         checkUser(user);
+
+        if (StringUtils.hasText(keyword)) {
+            searchLogService.saveKeyword(keyword);
+        }
+
+        List<String> relatedKeywords = searchLogService.getRelatedKeywordsFor(keyword);
 
         Page<Item> itemPage = itemRepository.searchByNameOrBrand(keyword, pageable);
 
@@ -124,7 +134,11 @@ public class ItemService {
             return ItemResponseDto.of(item, imageUrl, reviewAvgRating, reviewCnt);
         });
 
-        return ResponseEntity.ok(responseDto);
+        return ResponseEntity.ok(SearchItemResponseDto.builder()
+                .items(responseDto)
+                .relatedKeywords(relatedKeywords)
+                .build()
+        );
     }
 
     private static Item addItem(ItemRequestDto requestDto, User user, Category category, Brand brand) {
