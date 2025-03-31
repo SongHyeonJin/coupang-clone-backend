@@ -5,6 +5,7 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 10s
   profiles:
+    active: test
     include: secret
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
