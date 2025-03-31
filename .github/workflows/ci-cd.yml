@@ -9,20 +9,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
     steps:
-      # 1. GitHub Repository Checkout
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      # 2. JDK 17 설치
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'corretto'
 
-      # 3. Gradle 캐싱
       - name: Cache Gradle packages
         uses: actions/cache@v3
         with:
@@ -33,15 +33,12 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}
 
-      # 4. gradlew 실행 권한 부여
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      # 5. Gradle Build 실행 (테스트 제외)
-      - name: Build with Gradle
-        run: ./gradlew clean build -x test
+      - name: Build and test with Gradle
+        run: ./gradlew clean build
 
-      # 6. EC2 키 저장 및 JAR 전송
       - name: Save EC2 private key
         run: |
           echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
@@ -49,45 +46,46 @@ jobs:
 
       - name: Check built JAR files
         run: ls -alh build/libs
-        
-      - name: Decode application.yml from GitHub Secrets
-        run: |
-          echo "${{ secrets.APPLICATION_YML }}" | base64 --decode > application.yml        
 
-      - name: Deploy JAR file to EC2
+      - name: Deploy JAR to EC2
         run: |
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no build/libs/*.jar ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no application.yml ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no build/libs/*.jar \
+          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      # 1. EC2에 JAR 파일 복사 확인
-      - name: Verify JAR files exist on EC2
+      - name: SSH into EC2, create application-secret.yml and restart app
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            ls -alh /home/${{ secrets.EC2_USERNAME }} || echo "JAR files not found!"
+            echo "[INFO] Writing application-secret.yml manually with echo..."
+            
+            echo "spring:" > /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "  datasource:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "    password: \"${{ secrets.DB_PASSWORD }}\"" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "cloud:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "  aws:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "    credentials:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "      access-key: \"${{ secrets.S3_ACCESS_KEY }}\"" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "      secret-key: \"${{ secrets.S3_SECRET_KEY }}\"" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "    s3:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "      bucket: \"${{ secrets.S3_BUCKET }}\"" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "jwt:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "  secret: \"${{ secrets.JWT_SECRET }}\"" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            
+            echo "[INFO] Restarting Spring Boot application..."
+            /home/ec2-user/start.sh
 
-      # 2. EC2에서 앱 종료 후 재시작
-      - name: SSH into EC2 and restart app
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_KEY }}
-          script: /home/ec2-user/start.sh
-          
-      # 3. 로그 확인
       - name: Monitor app logs
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_KEY }}
-          script: tail -
+          script: tail -n 100 /home/ec2-user/app.log
