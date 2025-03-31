@@ -11,6 +11,6 @@ import java.util.List;
 public class SearchItemResponseDto {
 
     private Page<ItemResponseDto> items;
-    List<String> relatedKeywords;
+    private List<String> relatedKeywords;
 
 }
