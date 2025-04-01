@@ -18,7 +18,8 @@ public enum ExceptionEnum {
     CATEGORY_NOT_FOUND(HttpStatus.BAD_REQUEST.value(), "카테고리를 찾을 수 없습니다..", "ITEM"),
     BRAND_NOT_FOUND(HttpStatus.BAD_REQUEST.value(), "브랜드를 찾을 수 없습니다..", "ITEM"),
     CATEGORY_DUPLICATION(HttpStatus.BAD_REQUEST.value(), "이미 존재하는 카테고리입니다.", "ITEM"),
-    BRAND_DUPLICATION(HttpStatus.BAD_REQUEST.value(), "이미 존재하는 브랜드입니다.", "ITEM");
+    BRAND_DUPLICATION(HttpStatus.BAD_REQUEST.value(), "이미 존재하는 브랜드입니다.", "ITEM"),
+    IMAGE_REQUIRED(HttpStatus.BAD_REQUEST.value(), "이미지를 첨부해주세요.", "ITEM");
 
     private final int status;
     private final String msg;
