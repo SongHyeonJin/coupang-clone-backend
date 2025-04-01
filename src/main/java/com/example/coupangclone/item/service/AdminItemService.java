@@ -63,7 +63,7 @@ public class AdminItemService {
 
     private static void checkAdmin(User user) {
         if (!user.getRole().equals(UserRoleEnum.ADMIN)) {
-            throw new ErrorException(ExceptionEnum.PARENT_CATEGORY_NOT_FOUND);
+            throw new ErrorException(ExceptionEnum.NOT_ALLOW);
         }
     }
 
