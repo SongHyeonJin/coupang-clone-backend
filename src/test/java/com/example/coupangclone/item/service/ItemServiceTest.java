@@ -5,10 +5,12 @@ import com.example.coupangclone.global.dto.BasicResponseDto;
 import com.example.coupangclone.global.exception.ErrorException;
 import com.example.coupangclone.global.exception.ExceptionEnum;
 import com.example.coupangclone.item.dto.item.ItemRequestDto;
+import com.example.coupangclone.item.dto.item.ItemResponseDto;
 import com.example.coupangclone.item.entity.Brand;
 import com.example.coupangclone.item.entity.Category;
 import com.example.coupangclone.item.entity.Item;
 import com.example.coupangclone.item.entity.ItemImage;
+import com.example.coupangclone.item.enums.ItemSortType;
 import com.example.coupangclone.item.enums.ItemTypeEnum;
 import com.example.coupangclone.item.repository.BrandRepository;
 import com.example.coupangclone.item.repository.CategoryRepository;
@@ -22,6 +24,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
@@ -287,6 +293,261 @@ class ItemServiceTest {
         assertThatThrownBy(() -> itemService.createItem(requestDto, images, user))
                 .isInstanceOf(ErrorException.class)
                 .hasMessage(ExceptionEnum.IMAGE_REQUIRED.getMsg());
+    }
+
+    @DisplayName("상품 목록을 페이징 및 최신 순(기본)으로 조회한다.")
+    @Test
+    void getItems_success() throws IOException {
+        // given
+        User user =
+                createUser("test@example.com", "qwer123!", "김서방", "01043215678", "남성");
+        Category category =
+                createCategory("전자제품", ItemTypeEnum.THING, null);
+        Brand brand = createBrand("삼성");
+        userRepository.save(user);
+        categoryRepository.save(category);
+        brandRepository.save(brand);
+        ItemRequestDto requestDto1 =
+                createItemDto("노트북", 0, "정품입니다.", 1200000, 1060000, 1, 1, 0, category.getId(), brand.getId());
+        ItemRequestDto requestDto2 =
+                createItemDto("냉장고", 0, "굉장히 좋습니다.", 2100000, 1960000, 1, 1, 0, category.getId(), brand.getId());
+        Item item1 = createItem(requestDto1, user, category, brand);
+        Item item2 = createItem(requestDto2, user, category, brand);
+
+        MockMultipartFile image1 = new MockMultipartFile(
+                "images",
+                "laptop.jpg",
+                "image/jpg",
+                "fake image content".getBytes()
+        );
+        MockMultipartFile image2 = new MockMultipartFile(
+                "images",
+                "samsung.jpg",
+                "image/jpg",
+                "fake image content".getBytes()
+        );
+
+        List<MultipartFile> images1 = new ArrayList<>(List.of(image1));
+        List<ItemImage> itemImages1 = new ArrayList<>();
+        for (MultipartFile image : images1) {
+            String imageUrl = s3Uploader.upload(image);
+
+            ItemImage itemImage = ItemImage.builder()
+                    .image(imageUrl)
+                    .item(item1)
+                    .build();
+            itemImages1.add(itemImage);
+        }
+
+        List<ItemImage> itemImages2 = new ArrayList<>();
+        List<MultipartFile> images2 = new ArrayList<>(List.of(image2));
+        for (MultipartFile image : images2) {
+            String imageUrl = s3Uploader.upload(image);
+
+            ItemImage itemImage = ItemImage.builder()
+                    .image(imageUrl)
+                    .item(item2)
+                    .build();
+            itemImages2.add(itemImage);
+        }
+        itemRepository.saveAll(List.of(item1, item2));
+        itemImageRepository.saveAll(itemImages1);
+        itemImageRepository.saveAll(itemImages2);
+
+        String sort = "";
+        ItemSortType sortType = ItemSortType.from(sort);
+        Pageable sortedPageable = PageRequest.of(
+                0,
+                5,
+                Sort.by(sortType.getDirection(), sortType.getProperty())
+        );
+
+        // when
+        ResponseEntity<Page<ItemResponseDto>> response = itemService.getItems(sortedPageable, user, sort);
+
+        // then
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+
+        Page<ItemResponseDto> itemResponseDtos = response.getBody();
+        assertThat(itemResponseDtos.getContent()).hasSize(2);
+
+        ItemResponseDto firstItem = itemResponseDtos.getContent().get(0);
+        assertThat(firstItem.getName()).isEqualTo("냉장고, 1개");
+        assertThat(firstItem.getSale()).isEqualTo(1960000);
+
+        ItemResponseDto secondItem = itemResponseDtos.getContent().get(1);
+        assertThat(secondItem.getName()).isEqualTo("노트북, 1개");
+        assertThat(secondItem.getSale()).isEqualTo(1060000);
+    }
+
+    @DisplayName("상품 목록을 페이징 및 높은 가격 순으로 조회한다.")
+    @Test
+    void getItems_price_desc_success() throws IOException {
+        // given
+        User user =
+                createUser("test@example.com", "qwer123!", "김서방", "01043215678", "남성");
+        Category category =
+                createCategory("전자제품", ItemTypeEnum.THING, null);
+        Brand brand = createBrand("삼성");
+        userRepository.save(user);
+        categoryRepository.save(category);
+        brandRepository.save(brand);
+        ItemRequestDto requestDto1 =
+                createItemDto("노트북", 0, "정품입니다.", 1200000, 1060000, 1, 1, 0, category.getId(), brand.getId());
+        ItemRequestDto requestDto2 =
+                createItemDto("냉장고", 0, "굉장히 좋습니다.", 2100000, 1960000, 1, 1, 0, category.getId(), brand.getId());
+        Item item1 = createItem(requestDto1, user, category, brand);
+        Item item2 = createItem(requestDto2, user, category, brand);
+
+        MockMultipartFile image1 = new MockMultipartFile(
+                "images",
+                "laptop.jpg",
+                "image/jpg",
+                "fake image content".getBytes()
+        );
+        MockMultipartFile image2 = new MockMultipartFile(
+                "images",
+                "samsung.jpg",
+                "image/jpg",
+                "fake image content".getBytes()
+        );
+
+        List<MultipartFile> images1 = new ArrayList<>(List.of(image1));
+        List<ItemImage> itemImages1 = new ArrayList<>();
+        for (MultipartFile image : images1) {
+            String imageUrl = s3Uploader.upload(image);
+
+            ItemImage itemImage = ItemImage.builder()
+                    .image(imageUrl)
+                    .item(item1)
+                    .build();
+            itemImages1.add(itemImage);
+        }
+
+        List<ItemImage> itemImages2 = new ArrayList<>();
+        List<MultipartFile> images2 = new ArrayList<>(List.of(image2));
+        for (MultipartFile image : images2) {
+            String imageUrl = s3Uploader.upload(image);
+
+            ItemImage itemImage = ItemImage.builder()
+                    .image(imageUrl)
+                    .item(item2)
+                    .build();
+            itemImages2.add(itemImage);
+        }
+        itemRepository.saveAll(List.of(item1, item2));
+        itemImageRepository.saveAll(itemImages1);
+        itemImageRepository.saveAll(itemImages2);
+
+        String sort = "price_desc";
+        ItemSortType sortType = ItemSortType.from(sort);
+        Pageable sortedPageable = PageRequest.of(
+                0,
+                5,
+                Sort.by(sortType.getDirection(), sortType.getProperty())
+        );
+
+        // when
+        ResponseEntity<Page<ItemResponseDto>> response = itemService.getItems(sortedPageable, user, sort);
+
+        // then
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+
+        Page<ItemResponseDto> itemResponseDtos = response.getBody();
+        assertThat(itemResponseDtos.getContent()).hasSize(2);
+
+        ItemResponseDto firstItem = itemResponseDtos.getContent().get(0);
+        assertThat(firstItem.getName()).isEqualTo("냉장고, 1개");
+        assertThat(firstItem.getSale()).isEqualTo(1960000);
+
+        ItemResponseDto secondItem = itemResponseDtos.getContent().get(1);
+        assertThat(secondItem.getName()).isEqualTo("노트북, 1개");
+        assertThat(secondItem.getSale()).isEqualTo(1060000);
+    }
+
+    @DisplayName("상품 목록을 페이징 및 낮음 가격 순으로 조회한다.")
+    @Test
+    void getItems_price_asc_success() throws IOException {
+        // given
+        User user =
+                createUser("test@example.com", "qwer123!", "김서방", "01043215678", "남성");
+        Category category =
+                createCategory("전자제품", ItemTypeEnum.THING, null);
+        Brand brand = createBrand("삼성");
+        userRepository.save(user);
+        categoryRepository.save(category);
+        brandRepository.save(brand);
+        ItemRequestDto requestDto1 =
+                createItemDto("노트북", 0, "정품입니다.", 1200000, 1060000, 1, 1, 0, category.getId(), brand.getId());
+        ItemRequestDto requestDto2 =
+                createItemDto("냉장고", 0, "굉장히 좋습니다.", 2100000, 1960000, 1, 1, 0, category.getId(), brand.getId());
+        Item item1 = createItem(requestDto1, user, category, brand);
+        Item item2 = createItem(requestDto2, user, category, brand);
+
+        MockMultipartFile image1 = new MockMultipartFile(
+                "images",
+                "laptop.jpg",
+                "image/jpg",
+                "fake image content".getBytes()
+        );
+        MockMultipartFile image2 = new MockMultipartFile(
+                "images",
+                "samsung.jpg",
+                "image/jpg",
+                "fake image content".getBytes()
+        );
+
+        List<MultipartFile> images1 = new ArrayList<>(List.of(image1));
+        List<ItemImage> itemImages1 = new ArrayList<>();
+        for (MultipartFile image : images1) {
+            String imageUrl = s3Uploader.upload(image);
+
+            ItemImage itemImage = ItemImage.builder()
+                    .image(imageUrl)
+                    .item(item1)
+                    .build();
+            itemImages1.add(itemImage);
+        }
+
+        List<ItemImage> itemImages2 = new ArrayList<>();
+        List<MultipartFile> images2 = new ArrayList<>(List.of(image2));
+        for (MultipartFile image : images2) {
+            String imageUrl = s3Uploader.upload(image);
+
+            ItemImage itemImage = ItemImage.builder()
+                    .image(imageUrl)
+                    .item(item2)
+                    .build();
+            itemImages2.add(itemImage);
+        }
+        itemRepository.saveAll(List.of(item1, item2));
+        itemImageRepository.saveAll(itemImages1);
+        itemImageRepository.saveAll(itemImages2);
+
+        String sort = "price_asc";
+        ItemSortType sortType = ItemSortType.from(sort);
+        Pageable sortedPageable = PageRequest.of(
+                0,
+                5,
+                Sort.by(sortType.getDirection(), sortType.getProperty())
+        );
+
+        // when
+        ResponseEntity<Page<ItemResponseDto>> response = itemService.getItems(sortedPageable, user, sort);
+
+        // then
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+
+        Page<ItemResponseDto> itemResponseDtos = response.getBody();
+        assertThat(itemResponseDtos.getContent()).hasSize(2);
+
+        ItemResponseDto firstItem = itemResponseDtos.getContent().get(0);
+        assertThat(firstItem.getName()).isEqualTo("노트북, 1개");
+        assertThat(firstItem.getSale()).isEqualTo(1060000);
+
+        ItemResponseDto secondItem = itemResponseDtos.getContent().get(1);
+        assertThat(secondItem.getName()).isEqualTo("냉장고, 1개");
+        assertThat(secondItem.getSale()).isEqualTo(1960000);
     }
 
     private User createUser(String email, String password, String name, String tel, String gender) {
