@@ -6,16 +6,11 @@ import com.example.coupangclone.global.exception.ErrorException;
 import com.example.coupangclone.global.exception.ExceptionEnum;
 import com.example.coupangclone.item.dto.item.ItemRequestDto;
 import com.example.coupangclone.item.dto.item.ItemResponseDto;
-import com.example.coupangclone.item.entity.Brand;
-import com.example.coupangclone.item.entity.Category;
-import com.example.coupangclone.item.entity.Item;
-import com.example.coupangclone.item.entity.ItemImage;
+import com.example.coupangclone.item.dto.item.SearchItemResponseDto;
+import com.example.coupangclone.item.entity.*;
 import com.example.coupangclone.item.enums.ItemSortType;
 import com.example.coupangclone.item.enums.ItemTypeEnum;
-import com.example.coupangclone.item.repository.BrandRepository;
-import com.example.coupangclone.item.repository.CategoryRepository;
-import com.example.coupangclone.item.repository.ItemImageRepository;
-import com.example.coupangclone.item.repository.ItemRepository;
+import com.example.coupangclone.item.repository.*;
 import com.example.coupangclone.user.entity.User;
 import com.example.coupangclone.user.enums.UserRoleEnum;
 import com.example.coupangclone.user.repository.UserRepository;
@@ -57,10 +52,15 @@ class ItemServiceTest {
     @Autowired
     private ItemImageRepository itemImageRepository;
     @Autowired
+    private SearchLogRepository searchLogRepository;
+    @Autowired
     private S3Uploader s3Uploader;
+    @Autowired
+    private SearchLogService searchLogService;
 
     @AfterEach
     void tearDown() {
+        searchLogRepository.deleteAllInBatch();
         itemImageRepository.deleteAllInBatch();
         itemRepository.deleteAllInBatch();
         brandRepository.deleteAllInBatch();
@@ -548,6 +548,102 @@ class ItemServiceTest {
         ItemResponseDto secondItem = itemResponseDtos.getContent().get(1);
         assertThat(secondItem.getName()).isEqualTo("냉장고, 1개");
         assertThat(secondItem.getSale()).isEqualTo(1960000);
+    }
+
+    @DisplayName("키워드의 연관검색어와 상품 검색에 성공한다.")
+    @Test
+    void searchItems_success() throws IOException {
+        User user =
+                createUser("test@example.com", "qwer123!", "김서방", "01043215678", "남성");
+        Category category =
+                createCategory("전자제품", ItemTypeEnum.THING, null);
+        Brand brand = createBrand("삼성");
+        userRepository.save(user);
+        categoryRepository.save(category);
+        brandRepository.save(brand);
+        ItemRequestDto requestDto1 =
+                createItemDto("노트북", 0, "정품입니다.", 1200000, 1060000, 1, 1, 0, category.getId(), brand.getId());
+        ItemRequestDto requestDto2 =
+                createItemDto("냉장고", 0, "굉장히 좋습니다.", 2100000, 1960000, 1, 1, 0, category.getId(), brand.getId());
+        Item item1 = createItem(requestDto1, user, category, brand);
+        Item item2 = createItem(requestDto2, user, category, brand);
+
+        MockMultipartFile image1 = new MockMultipartFile(
+                "images",
+                "laptop.jpg",
+                "image/jpg",
+                "fake image content".getBytes()
+        );
+        MockMultipartFile image2 = new MockMultipartFile(
+                "images",
+                "samsung.jpg",
+                "image/jpg",
+                "fake image content".getBytes()
+        );
+
+        List<MultipartFile> images1 = new ArrayList<>(List.of(image1));
+        List<ItemImage> itemImages1 = new ArrayList<>();
+        for (MultipartFile image : images1) {
+            String imageUrl = s3Uploader.upload(image);
+
+            ItemImage itemImage = ItemImage.builder()
+                    .image(imageUrl)
+                    .item(item1)
+                    .build();
+            itemImages1.add(itemImage);
+        }
+
+        List<ItemImage> itemImages2 = new ArrayList<>();
+        List<MultipartFile> images2 = new ArrayList<>(List.of(image2));
+        for (MultipartFile image : images2) {
+            String imageUrl = s3Uploader.upload(image);
+
+            ItemImage itemImage = ItemImage.builder()
+                    .image(imageUrl)
+                    .item(item2)
+                    .build();
+            itemImages2.add(itemImage);
+        }
+        itemRepository.saveAll(List.of(item1, item2));
+        itemImageRepository.saveAll(itemImages1);
+        itemImageRepository.saveAll(itemImages2);
+
+        String keyword = "노트북";
+        Pageable sortedPageable = PageRequest.of(0, 5);
+
+        SearchLog log1 = SearchLog.builder()
+                .mainKeyword("노트북")
+                .brand("삼성")
+                .keywords(List.of("노트북", "노트북pro"))
+                .build();
+
+        SearchLog log2 = SearchLog.builder()
+                .mainKeyword("삼성")
+                .brand("삼성")
+                .keywords(List.of("노트북", "노트북pro", "냉장고"))
+                .build();
+
+        SearchLog log3 = SearchLog.builder()
+                .mainKeyword("pro")
+                .brand("삼성")
+                .keywords(List.of("노트북pro"))
+                .build();
+        searchLogRepository.saveAll(List.of(log1, log2, log3));
+
+        // when
+        ResponseEntity<SearchItemResponseDto> response = itemService.searchItems(keyword, sortedPageable, user);
+
+        // then
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isInstanceOf(SearchItemResponseDto.class);
+
+        SearchItemResponseDto responseDto = (SearchItemResponseDto) response.getBody();
+        assertThat(responseDto.getItems()).isNotEmpty();
+        assertThat(responseDto.getItems()).hasSize(1);
+        assertThat(responseDto.getItems().getContent().get(0).getName()).contains("노트북");
+        assertThat(responseDto.getRelatedKeywords()).hasSize(2);
+        assertThat(responseDto.getRelatedKeywords().get(0)).isEqualTo("노트북pro");
+        assertThat(responseDto.getRelatedKeywords()).containsExactlyInAnyOrder("노트북pro", "노트북");
     }
 
     private User createUser(String email, String password, String name, String tel, String gender) {
