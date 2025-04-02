@@ -55,18 +55,21 @@ public class ItemService {
         Item item = addItem(requestDto, user, category, brand);
         itemRepository.save(item);
 
-        List<ItemImage> itemImages = new ArrayList<>();
-        if (images != null && !images.isEmpty()) {
-            for (MultipartFile image : images) {
-                String imageUrl = s3Uploader.upload(image);
-
-                ItemImage itemImage = ItemImage.builder()
-                        .image(imageUrl)
-                        .item(item)
-                        .build();
-                itemImages.add(itemImage);
-            }
+        if (images==null || images.isEmpty()) {
+            throw new ErrorException(ExceptionEnum.IMAGE_REQUIRED);
         }
+
+        List<ItemImage> itemImages = new ArrayList<>();
+        for (MultipartFile image : images) {
+            String imageUrl = s3Uploader.upload(image);
+
+            ItemImage itemImage = ItemImage.builder()
+                    .image(imageUrl)
+                    .item(item)
+                    .build();
+            itemImages.add(itemImage);
+        }
+
         itemImageRepository.saveAll(itemImages);
 
         return ResponseEntity.ok(BasicResponseDto.addSuccess("상품 등록이 완료되었습니다."));

@@ -12,13 +12,19 @@ import java.util.List;
 
 public interface ItemRepository extends JpaRepository<Item, Long> {
 
-    @Query("SELECT i FROM Item i LEFT JOIN i.brand b " +
-            "WHERE i.name LIKE %:keyword% OR (b IS NOT NULL AND b.name LIKE %:keyword%)")
+    @Query("""
+            SELECT i FROM Item i
+            LEFT JOIN i.brand b
+            WHERE LOWER(i.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR (b IS NOT NULL AND LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            """)
     Page<Item> searchByNameOrBrand(@Param("keyword") String keyword, Pageable pageable);
 
-    @Query("SELECT i FROM Item i LEFT JOIN i.brand b " +
-            "WHERE LOWER(i.name) LIKE LOWER(%:keyword%) " +
-            "OR (b IS NOT NULL AND LOWER(b.name) LIKE LOWER(%:keyword%))")
+    @Query("""
+            SELECT i FROM Item i LEFT JOIN i.brand b
+            WHERE LOWER(i.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR (b IS NOT NULL AND LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
+            """)
     List<Item> findMatchingItemsByNameOrBrand(@Param("keyword") String keyword);
 
     List<Item> findTop5ByBrand(Brand brand);
