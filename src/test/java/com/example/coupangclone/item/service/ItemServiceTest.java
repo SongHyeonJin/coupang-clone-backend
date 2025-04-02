@@ -1,6 +1,7 @@
 package com.example.coupangclone.item.service;
 
 import com.example.coupangclone.config.S3Uploader;
+import com.example.coupangclone.fake.FakeS3Uploader;
 import com.example.coupangclone.global.dto.BasicResponseDto;
 import com.example.coupangclone.global.exception.ErrorException;
 import com.example.coupangclone.global.exception.ExceptionEnum;
@@ -19,6 +20,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,8 +39,18 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@TestConfiguration
+class TestS3Config {
+    @Bean
+    public S3Uploader s3Uploader() {
+        return new FakeS3Uploader();
+    }
+
+}
+
 @ActiveProfiles("test")
 @SpringBootTest
+@Import(TestS3Config.class)
 class ItemServiceTest {
 
     @Autowired
