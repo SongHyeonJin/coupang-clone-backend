@@ -53,4 +53,25 @@ class UserRepositoryTest {
         assertThat(result).isNotPresent();
     }
 
+    @DisplayName("이메일 존재여부를 체크한다.")
+    @Test
+    void existsByEmail(){
+        // given
+        User user = User.builder()
+                .email("test123@example.com")
+                .password("qwer123!")
+                .name("홍길동")
+                .tel("01012345678")
+                .gender("남성")
+                .role(UserRoleEnum.USER)
+                .build();
+        userRepository.save(user);
+
+        // when
+        boolean result = userRepository.existsByEmail(user.getEmail());
+
+        // then
+        assertThat(result).isTrue();
+    }
+
 }
