@@ -93,7 +93,7 @@ class AdminItemServiceTest {
                 createUser("admin@example.com", "qwer123!", "관리자", "01098765432", "남성");
         userRepository.save(admin);
         CategoryRequestDto requestDto = createCategoryDto("전자제품", ItemTypeEnum.THING, null);
-        Category category = createCategory(requestDto);
+        Category category = createCategory(requestDto.getName(), requestDto.getType());
         categoryRepository.save(category);
 
         // when // then
@@ -109,13 +109,10 @@ class AdminItemServiceTest {
         User admin =
                 createUser("admin@example.com", "qwer123!", "관리자", "01098765432", "남성");
         userRepository.save(admin);
-        Category category = Category.builder()
-                .name("과일")
-                .type(ItemTypeEnum.FOOD)
-                .build();
+        Category category = createCategory("과일", ItemTypeEnum.FOOD);
         categoryRepository.save(category);
         categoryRepository.deleteById(category.getId());
-        CategoryRequestDto requestDto = createCategoryDto("사과", ItemTypeEnum.FOOD, category);
+        CategoryRequestDto requestDto = createCategoryDto("사과", ItemTypeEnum.FOOD, category.getId());
 
         // when // then
         assertThatThrownBy(() -> adminItemService.createCategory(requestDto, admin))
@@ -201,19 +198,18 @@ class AdminItemServiceTest {
                 .build();
     }
 
-    private CategoryRequestDto createCategoryDto(String name, ItemTypeEnum type, Category parent) {
+    private CategoryRequestDto createCategoryDto(String name, ItemTypeEnum type, Long parentId) {
         return CategoryRequestDto.builder()
                 .name(name)
                 .type(type)
-                .parent(parent)
+                .parentId(parentId)
                 .build();
     }
 
-    private Category createCategory(CategoryRequestDto requestDto) {
+    private Category createCategory(String name, ItemTypeEnum type) {
         return Category.builder()
-                .name(requestDto.getName())
-                .type(requestDto.getType())
-                .parent(requestDto.getParent())
+                .name(name)
+                .type(type)
                 .build();
     }
 

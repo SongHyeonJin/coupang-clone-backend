@@ -32,8 +32,8 @@ public class AdminItemService {
         }
 
         Category parent = null;
-        if (requestDto.getParent() != null) {
-            parent = categoryRepository.findById(requestDto.getParent().getId()).orElseThrow(
+        if (requestDto.getParentId() != null) {
+            parent = categoryRepository.findById(requestDto.getParentId()).orElseThrow(
                     () -> new ErrorException(ExceptionEnum.CATEGORY_NOT_FOUND)
             );
         }
