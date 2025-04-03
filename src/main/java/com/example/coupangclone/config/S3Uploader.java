@@ -13,6 +13,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class S3Uploader {
+
     private final AmazonS3 amazonS3;
 
     @Value("${cloud.aws.s3.bucket}")
@@ -21,33 +22,25 @@ public class S3Uploader {
     public String upload(MultipartFile multipartFile) throws IOException {
         String originalFileName = multipartFile.getOriginalFilename();
         String fileExtension = getFileExtension(originalFileName);
-        String fileName = UUID.randomUUID().toString() + "_" + originalFileName;
 
         if (!isValidImageExtension(fileExtension)) {
             throw new IOException("Invalid file type. Only .jpg, .jpeg, and .png files are allowed.");
         }
 
-        String contentType = "image/jpg";
-        if (fileExtension.equalsIgnoreCase("png")) {
-            contentType = "image/png";
-        } else if (fileExtension.equalsIgnoreCase("jpeg")) {
-            contentType = "image/jpeg";
-        }
+        String fileName = generateFileName(originalFileName);
 
-        ObjectMetadata objMeta = new ObjectMetadata();
-        objMeta.setContentLength(multipartFile.getSize());
-        objMeta.setContentType(contentType);
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(multipartFile.getSize());
+        metadata.setContentType(getContentType(fileExtension));
 
-        amazonS3.putObject(bucket, fileName, multipartFile.getInputStream(), objMeta);
+        amazonS3.putObject(bucket, fileName, multipartFile.getInputStream(), metadata);
 
         return amazonS3.getUrl(bucket, fileName).toString();
     }
 
-    // 파일 삭제
     public boolean delete(String fileUrl) {
         try {
-            String[] temp = fileUrl.split("/");
-            String fileKey = temp[temp.length-1];
+            String fileKey = extractFileKey(fileUrl);
             amazonS3.deleteObject(bucket, fileKey);
             return true;
         } catch (Exception e) {
@@ -55,13 +48,28 @@ public class S3Uploader {
         }
     }
 
-    private boolean isValidImageExtension(String extension) {
-        return extension.equalsIgnoreCase("jpg") || extension.equalsIgnoreCase("jpeg") || extension.equalsIgnoreCase("png");
-    }
-
     private String getFileExtension(String fileName) {
         int dotIndex = fileName.lastIndexOf(".");
-        return (dotIndex > 0) ? fileName.substring(dotIndex + 1) : "";
+        return (dotIndex > 0) ? fileName.substring(dotIndex + 1).toLowerCase() : "";
     }
 
+    private boolean isValidImageExtension(String extension) {
+        return extension.equals("jpg") || extension.equals("jpeg") || extension.equals("png");
+    }
+
+    private String getContentType(String extension) {
+        return switch (extension) {
+            case "png" -> "image/png";
+            case "jpeg" -> "image/jpeg";
+            default -> "image/jpg";
+        };
+    }
+
+    private String generateFileName(String originalName) {
+        return UUID.randomUUID() + "_" + originalName;
+    }
+
+    private String extractFileKey(String fileUrl) {
+        return fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+    }
 }

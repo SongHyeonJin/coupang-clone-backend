@@ -1,7 +1,9 @@
-package com.example.coupangclone.user.repository;
+package com.example.coupangclone.item.repository;
 
+import com.example.coupangclone.item.entity.Brand;
 import com.example.coupangclone.user.entity.User;
 import com.example.coupangclone.user.enums.UserRoleEnum;
+import com.example.coupangclone.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,65 +15,65 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+
 @ActiveProfiles("test")
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class UserRepositoryTest {
+class BrandRepositoryTest {
 
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private BrandRepository brandRepository;
 
-    @DisplayName("이메일로 사용자 조회 성공한다.")
+    @DisplayName("이미 존재하는 브랜드라면 existsByName이 true를 반환한다.")
     @Test
-    void findByEmail_success(){
+    void existsBrand(){
         // given
         User user = User.builder()
-                .email("test123@example.com")
+                .email("admin@example.com")
                 .password("qwer123!")
-                .name("홍길동")
+                .name("관리자")
                 .tel("01012345678")
                 .gender("남성")
-                .role(UserRoleEnum.USER)
+                .role(UserRoleEnum.ADMIN)
                 .build();
         userRepository.save(user);
+        Brand brand = Brand.builder()
+                .name("애플")
+                .build();
+        brandRepository.save(brand);
 
         // when
-        Optional<User> result = userRepository.findByEmail("test123@example.com");
+        boolean existsByName = brandRepository.existsByName("애플");
+
+        // then
+        assertThat(existsByName).isTrue();
+    }
+
+    @DisplayName("브랜드 이름으로 브랜드를 찾는다.")
+    @Test
+    void findByName(){
+        // given
+        User user = User.builder()
+                .email("admin@example.com")
+                .password("qwer123!")
+                .name("관리자")
+                .tel("01012345678")
+                .gender("남성")
+                .role(UserRoleEnum.ADMIN)
+                .build();
+        userRepository.save(user);
+        Brand brand = Brand.builder()
+                .name("애플")
+                .build();
+        brandRepository.save(brand);
+
+        // when
+        Optional<Brand> result = brandRepository.findByName("애플");
 
         // then
         assertThat(result).isPresent();
-        assertThat(result.get().getEmail()).isEqualTo("test123@example.com");
-    }
-
-    @DisplayName("존재하지 않는 이메일 조회시 실패한다.")
-    @Test
-    void findByEmail_fail(){
-        // given
-        Optional<User> result = userRepository.findByEmail("fail123@example.com");
-
-        // when // then
-        assertThat(result).isNotPresent();
-    }
-
-    @DisplayName("이메일 존재여부를 체크한다.")
-    @Test
-    void existsByEmail(){
-        // given
-        User user = User.builder()
-                .email("test123@example.com")
-                .password("qwer123!")
-                .name("홍길동")
-                .tel("01012345678")
-                .gender("남성")
-                .role(UserRoleEnum.USER)
-                .build();
-        userRepository.save(user);
-
-        // when
-        boolean result = userRepository.existsByEmail(user.getEmail());
-
-        // then
-        assertThat(result).isTrue();
     }
 
 }

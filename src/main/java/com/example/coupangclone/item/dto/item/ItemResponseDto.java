@@ -2,6 +2,7 @@ package com.example.coupangclone.item.dto.item;
 
 import com.example.coupangclone.item.entity.Item;
 import com.example.coupangclone.item.enums.ItemTypeEnum;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,6 +14,7 @@ import java.util.Locale;
 
 @Getter
 @Builder
+@Schema(description = "전체 상품 응답 DTO")
 public class ItemResponseDto {
     // 대표 이미지
     private String image;

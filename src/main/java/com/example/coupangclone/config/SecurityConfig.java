@@ -29,6 +29,16 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private static final String[] PERMIT_URL_ARRAY = {
+            "/api/signup",
+            "/api/login",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/swagger-resources/**",
+            "/configuration/**",
+            "/webjars/**"
+    };
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -42,7 +52,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorizeRequests ->
                         authorizeRequests
-                                .requestMatchers("/api/signup", "/api/login", "/api/log-test").permitAll()
+                                .requestMatchers(PERMIT_URL_ARRAY).permitAll()
                                 .requestMatchers("/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated()
                         )
@@ -58,7 +68,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:8080", "https://coupang-clone.s3.ap-northeast-2.amazonaws.com"));
+        configuration.setAllowedOrigins(List.of("http://localhost:8080",
+                "https://coupang-clone.s3.ap-northeast-2.amazonaws.com",
+                "https://coupangclone.o-r.kr"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
