@@ -1,6 +1,8 @@
 package com.example.coupangclone.user.service;
 
 import com.example.coupangclone.auth.jwt.JwtProvider;
+import com.example.coupangclone.config.RedisUtil;
+import com.example.coupangclone.global.dto.BasicResponseDto;
 import com.example.coupangclone.global.dto.ErrorResponseDto;
 import com.example.coupangclone.global.exception.ErrorException;
 import com.example.coupangclone.global.exception.ExceptionEnum;
@@ -10,6 +12,7 @@ import com.example.coupangclone.user.dto.UserResponseDto;
 import com.example.coupangclone.user.entity.User;
 import com.example.coupangclone.user.enums.UserRoleEnum;
 import com.example.coupangclone.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +26,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -39,6 +43,9 @@ class UserServiceTest {
 
     @Autowired
     private JwtProvider jwtProvider;
+
+    @Autowired
+    private RedisUtil redisUtil;
 
     @AfterEach
     void tearDown() {
@@ -99,7 +106,7 @@ class UserServiceTest {
 
         // when
         HttpServletResponse httpServletResponse = Mockito.mock(HttpServletResponse.class);
-        String token = jwtProvider.createToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
+        String token = jwtProvider.createAccessToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
         httpServletResponse.addHeader(JwtProvider.AUTHORIZATION_HEADER, token);
 
         ResponseEntity<?> response = userService.login(requestDto, httpServletResponse);
@@ -145,6 +152,52 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.login(requestDto, null))
                 .isInstanceOf(ErrorException.class)
                 .hasMessage(ExceptionEnum.WRONG_PASSWORD.getMsg());
+    }
+
+    @DisplayName("로그인 후 로그아웃을 성공적으로 처리한다.")
+    @Test
+    void logout_success() {
+        // Given
+        User user = createUser("test@example.com", "password123!", "테스트", "01043215678", "남성");
+        userRepository.save(user);
+        String accessToken = jwtProvider.createAccessToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
+        String refreshToken = jwtProvider.createRefreshToken(user.getId());
+
+        // Mock the HttpServletRequest
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        when(request.getHeader(JwtProvider.AUTHORIZATION_HEADER)).thenReturn(accessToken);
+        when(request.getHeader(JwtProvider.REFRESH_TOKEN_HEADER)).thenReturn(refreshToken);
+
+        // When
+        ResponseEntity<?> response = userService.logout(request);
+
+        // Then
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isInstanceOf(BasicResponseDto.class);
+
+        BasicResponseDto responseDto = (BasicResponseDto) response.getBody();
+        assertThat(responseDto.getMsg()).isEqualTo("로그아웃 되었습니다.");
+
+        assertThat(redisUtil.get("RT:" + user.getId())).isNull();
+        assertThat(redisUtil.get("BL:" + accessToken.substring(7))).isEqualTo("logout");
+    }
+
+    @DisplayName("잘못된 토큰으로 로그아웃을 시도할 때 실패한다.")
+    @Test
+    void logout_invalidTokens() {
+        // Given
+        String accessToken = null;
+        String refreshToken = null;
+
+        // Mock the HttpServletRequest
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        when(request.getHeader(JwtProvider.AUTHORIZATION_HEADER)).thenReturn(accessToken);
+        when(request.getHeader(JwtProvider.REFRESH_TOKEN_HEADER)).thenReturn(refreshToken);
+
+        // When & Then
+        assertThatThrownBy(() -> userService.logout(request))
+                .isInstanceOf(ErrorException.class)
+                .hasMessage(ExceptionEnum.INVALID_TOKEN.getMsg());
     }
 
     private SignupRequestDto createUserDto(String email, String password, String name, String tel, String gender) {

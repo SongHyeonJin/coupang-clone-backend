@@ -1,6 +1,8 @@
 package com.example.coupangclone.user.controller;
 
 import com.example.coupangclone.auth.jwt.JwtProvider;
+import com.example.coupangclone.auth.service.TokenService;
+import com.example.coupangclone.config.RedisUtil;
 import com.example.coupangclone.global.exception.GlobalExceptionHandler;
 import com.example.coupangclone.user.dto.SignupRequestDto;
 import com.example.coupangclone.user.service.UserService;
@@ -37,6 +39,14 @@ class UserControllerTest {
 
     @TestConfiguration
     static class DummyConfig {
+        @Bean
+        public TokenService tokenService() {
+            return Mockito.mock(TokenService.class);
+        }
+        @Bean
+        public RedisUtil redisUtil() {
+            return Mockito.mock(RedisUtil.class);
+        }
         @Bean
         public JwtProvider jwtProvider() {
             return Mockito.mock(JwtProvider.class);

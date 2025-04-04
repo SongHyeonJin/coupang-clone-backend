@@ -20,8 +20,11 @@ public class SwaggerConfig {
                 .version("v1.0.0");
 
         String jwtSchemeName = "jwtAuth";
+        String refreshTokenSchemeName = "refreshTokenAuth";
 
-        SecurityRequirement securityRequirement = new SecurityRequirement().addList(jwtSchemeName);
+        SecurityRequirement securityRequirement = new SecurityRequirement()
+                .addList(jwtSchemeName)
+                .addList(refreshTokenSchemeName);
 
         SecurityScheme securityScheme = new SecurityScheme()
                 .name(jwtSchemeName)
@@ -29,9 +32,18 @@ public class SwaggerConfig {
                 .scheme("bearer")
                 .bearerFormat("JWT");
 
+        SecurityScheme refreshTokenScheme = new SecurityScheme()
+                .name(refreshTokenSchemeName)
+                .type(SecurityScheme.Type.APIKEY)
+                .in(SecurityScheme.In.HEADER)
+                .name("Refresh-Token");
+
         return new OpenAPI()
                 .info(info)
                 .addSecurityItem(securityRequirement)
-                .components(new Components().addSecuritySchemes(jwtSchemeName, securityScheme));
+                .components(new Components()
+                        .addSecuritySchemes(jwtSchemeName, securityScheme)
+                        .addSecuritySchemes(refreshTokenSchemeName, refreshTokenScheme)
+                );
     }
 }

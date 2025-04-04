@@ -1,6 +1,13 @@
 package com.example.coupangclone.auth.jwt;
 
+import com.example.coupangclone.auth.service.TokenService;
+import com.example.coupangclone.config.RedisUtil;
+import com.example.coupangclone.global.exception.ErrorException;
+import com.example.coupangclone.global.exception.ExceptionEnum;
+import com.example.coupangclone.user.entity.User;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -21,15 +29,44 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private final RedisUtil redisUtil;
+    private final TokenService tokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String token = jwtProvider.resolveToken(request);
 
-        if (token != null) {
-            if (jwtProvider.validationToken(token)){
+        try {
+            if (token != null && jwtProvider.validationToken(token)) {
+                if (redisUtil.hasKey("BL:" + token)) {
+                    throw new ErrorException(ExceptionEnum.INVALID_TOKEN);
+                }
                 Claims info = jwtProvider.getUserInfoFromToken(token);
                 setAuthentication(info.getSubject());
+            }
+        } catch (ExpiredJwtException e) {
+            String refreshToken = request.getHeader(JwtProvider.REFRESH_TOKEN_HEADER);
+
+            if (refreshToken != null) {
+                Claims claims = jwtProvider.getUserInfoFromToken(refreshToken);
+                String userId = claims.get("userId").toString();
+
+                User user = tokenService.verifyRefreshToken(refreshToken);
+                setAuthentication(user.getEmail());
+
+                String newAccessToken = jwtProvider.createAccessToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
+                response.setHeader(JwtProvider.AUTHORIZATION_HEADER, newAccessToken);
+
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+
+                String json = new ObjectMapper().writeValueAsString(
+                        Map.of("accessToken", newAccessToken)
+                );
+                response.getWriter().write(json);
+                return;
+            }else  {
+                    throw new ErrorException(ExceptionEnum.INVALID_TOKEN);
             }
         }
         filterChain.doFilter(request, response);
