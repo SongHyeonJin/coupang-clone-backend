@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.security.Key;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
 
@@ -26,9 +27,11 @@ public class JwtProvider {
 
     private final UserDetailsServiceImpl userDetailsService;
     public static final String AUTHORIZATION_HEADER = "Authorization";
+    public static final String REFRESH_TOKEN_HEADER = "Refresh-Token";
     public static final String AUTHORIZATION_KEY = "auth";
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final long TOKEN_TIME = 60 * 60 * 1000L;
+    private static final long ACCESS_TOKEN_TIME = Duration.ofMinutes(15).toMillis();
+    private static final long REFRESH_TOKEN_TIME = Duration.ofDays(14).toMillis();
     @Value("${jwt.secret}")
     private String secretKey;
     private Key key;
@@ -40,7 +43,7 @@ public class JwtProvider {
         key = Keys.hmacShaKeyFor(bytes);
     }
 
-    public String createToken(Long id, String email, String name, UserRoleEnum role) {
+    public String createAccessToken(Long id, String email, String name, UserRoleEnum role) {
         Date issuedAt = new Date();
 
         return BEARER_PREFIX + Jwts.builder()
@@ -49,8 +52,20 @@ public class JwtProvider {
                 .claim(AUTHORIZATION_KEY, role)
                 .claim("userId", id)
                 .claim("name", name)
-                .setExpiration(new Date(issuedAt.getTime() + TOKEN_TIME))
+                .setExpiration(new Date(issuedAt.getTime() + ACCESS_TOKEN_TIME))
                 .setIssuedAt(issuedAt)
+                .signWith(key, signatureAlgorithm)
+                .compact();
+    }
+
+    public String createRefreshToken(Long id) {
+        Date issuedAt = new Date();
+
+        return Jwts.builder()
+                .setSubject("refreshToken")
+                .claim("userId", id)
+                .setIssuedAt(issuedAt)
+                .setExpiration(new Date(issuedAt.getTime() + REFRESH_TOKEN_TIME))
                 .signWith(key, signatureAlgorithm)
                 .compact();
     }
@@ -76,6 +91,12 @@ public class JwtProvider {
         } catch (IllegalArgumentException e) {
             throw new ErrorException(ExceptionEnum.WRONG_TOKEN);
         }
+    }
+
+    public long getExpiration(String token) {
+        Date expiration = Jwts.parserBuilder().setSigningKey(key).build()
+                .parseClaimsJws(token).getBody().getExpiration();
+        return expiration.getTime() - System.currentTimeMillis();
     }
 
     public Claims getUserInfoFromToken(String token) {
