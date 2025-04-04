@@ -5,6 +5,7 @@ import com.example.coupangclone.user.dto.SignupRequestDto;
 import com.example.coupangclone.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,12 @@ public class UserController {
     public ResponseEntity<?> login(@RequestBody LoginRequestDto requestDto,
                                     HttpServletResponse response) {
         return userService.login(requestDto, response);
+    }
+
+    @Operation(summary = "로그아웃 (엑세스, 리프레쉬 토큰 모두 상단에 넣어주세요)", description = "사용자가 로그아웃을 합니다.")
+    @PostMapping("/api/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        return userService.logout(request);
     }
 
 }
