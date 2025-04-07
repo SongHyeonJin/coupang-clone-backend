@@ -7,24 +7,18 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 10s
   profiles:
-    active: test
     include: secret
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://43.200.193.73:3306/coupang-clone?useSSL=true&requireSSL=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: song
-    password:
+
   devtools:
     livereload:
       enabled: true
+
   jpa:
     properties:
       hibernate:
         show_sql: true
         format_sql: true
-    open-in-view: true
-    hibernate:
-      ddl-auto: update
+
   main:
     allow-bean-definition-overriding: true
 
@@ -45,12 +39,3 @@ cloud:
       auto: false
     region:
       static: ap-northeast-2
-    s3:
-      bucket: 
-    credentials:
-      access-key: 
-      secret-key: 
-
-
-jwt:
-  secret: 

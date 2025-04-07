@@ -52,6 +52,13 @@ jobs:
           scp -i ec2_key.pem -o StrictHostKeyChecking=no build/libs/*.jar \
           ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/
 
+      - name: Copy application.yml and application-prod.yml to EC2
+        run: |
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no \
+          src/main/resources/yaml/application.yml \
+          src/main/resources/yaml/application-prod.yml \
+          ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -65,21 +72,27 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            echo "[INFO] Writing application-secret.yml manually with echo..."
+            echo "[INFO] Writing multi-profile application-secret.yml..."
             
-            echo "spring:" > /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "spring:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "  config:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "    activate:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "      on-profile: prod" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             echo "  datasource:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             echo "    password: \"${{ secrets.DB_PASSWORD }}\"" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+
+            echo "---" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             echo "cloud:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             echo "  aws:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "    s3:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            echo "      bucket: \"${{ secrets.S3_BUCKET }}\"" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             echo "    credentials:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             echo "      access-key: \"${{ secrets.S3_ACCESS_KEY }}\"" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             echo "      secret-key: \"${{ secrets.S3_SECRET_KEY }}\"" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
-            echo "    s3:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
-            echo "      bucket: \"${{ secrets.S3_BUCKET }}\"" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+
             echo "jwt:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             echo "  secret: \"${{ secrets.JWT_SECRET }}\"" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
-            
+
             echo "[INFO] Restarting Spring Boot application..."
             /home/ec2-user/start.sh
 
