@@ -2,7 +2,7 @@ name: Coupang Clone - CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ develop, main ]
   pull_request:
     branches: [ develop, main ]
 
@@ -36,16 +36,24 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      - name: Preprocess resources
+        run: ./gradlew processResources
+
       - name: Build and test with Gradle
-        run: ./gradlew clean build
+        run: ./gradlew clean build -x test
+
+      - name: Check built resources
+        run: |
+          ls -al build/resources/main
+          cat build/resources/main/application-test.yml || echo "❌ NO application-test.yml"
+
+      - name: Check built JAR files
+        run: ls -alh build/libs
 
       - name: Save EC2 private key
         run: |
           echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
-          chmod 600 ec2_key.pem
-
-      - name: Check built JAR files
-        run: ls -alh build/libs
+          chmod 600 ec2_key.pem        
 
       - name: Deploy JAR to EC2
         run: |

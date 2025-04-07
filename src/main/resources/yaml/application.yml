@@ -2,6 +2,9 @@ server:
   shutdown: graceful
 
 spring:
+  config:
+    import: "classpath:/yaml/"
+
   lifecycle:
     timeout-per-shutdown-phase: 10s
   profiles:
@@ -16,9 +19,6 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
-
-  main:
-    allow-bean-definition-overriding: true
 
   servlet:
     multipart:

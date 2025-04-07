@@ -7,6 +7,22 @@ plugins {
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 
+sourceSets {
+	main {
+		resources {
+			srcDirs = ['src/main/resources', 'src/main/resources/yaml']
+		}
+	}
+}
+
+tasks.named('processResources') {
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	from("src/main/resources/yaml") {
+		include "**/*.yml"
+		into("")
+	}
+}
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(17)
@@ -67,4 +83,7 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	systemProperty "spring.profiles.active", "test"
+	systemProperty "spring.config.location", "classpath:/yaml/"
+	systemProperty "spring.config.name", "application,application-secret,application-test"
 }
