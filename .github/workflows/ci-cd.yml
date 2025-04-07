@@ -37,7 +37,9 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build and test with Gradle
-        run: ./gradlew clean build
+        run: /gradlew clean build \
+            -Dspring.profiles.active=test \
+            -Dspring.config.location=src/main/resources/yaml/application-test.yml
 
       - name: Save EC2 private key
         run: |
