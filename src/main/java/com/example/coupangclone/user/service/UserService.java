@@ -13,7 +13,6 @@ import com.example.coupangclone.user.dto.UserResponseDto;
 import com.example.coupangclone.user.entity.User;
 import com.example.coupangclone.user.enums.UserRoleEnum;
 import com.example.coupangclone.user.repository.UserRepository;
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
