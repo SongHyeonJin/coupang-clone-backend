@@ -1,89 +1,60 @@
 plugins {
+	id 'org.springframework.boot' version '3.2.5' apply false
+	id 'io.spring.dependency-management' version '1.1.7'apply false
 	id 'java'
-	id 'org.springframework.boot' version '3.2.5'
-	id 'io.spring.dependency-management' version '1.1.7'
 }
 
-group = 'com.example'
-version = '0.0.1-SNAPSHOT'
+allprojects {
+	group = 'com.example'
+	version = '0.0.1-SNAPSHOT'
 
-sourceSets {
-	main {
-		resources {
-			srcDirs = ['src/main/resources', 'src/main/resources/yaml']
+	repositories {
+		mavenCentral()
+	}
+}
+
+subprojects {
+	apply plugin: 'java'
+	apply plugin: 'io.spring.dependency-management'
+
+	java {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(17)
 		}
 	}
-}
 
-tasks.named('processResources') {
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-	from("src/main/resources/yaml") {
-		include "**/*.yml"
-		into("")
+	configurations {
+		compileOnly {
+			extendsFrom annotationProcessor
+		}
 	}
-}
 
-java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+	dependencies {
+		compileOnly 'org.projectlombok:lombok'
+		annotationProcessor 'org.projectlombok:lombok'
+		testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	}
-}
 
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
+	test {
+		useJUnitPlatform()
+		systemProperty 'spring.profiles.active', 'test'
+		systemProperty 'spring.config.location', 'classpath:/yaml/'
+		systemProperty 'spring.config.name', 'application,application-secret,application-test'
 	}
-}
 
-repositories {
-	mavenCentral()
-}
+	sourceSets {
+		main {
+			resources {
+				srcDirs 'src/main/resources', 'src/main/resources/yaml'
+			}
+		}
+	}
 
-dependencies {
-	// spring boot
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-
-	// security
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-
-	// jpa
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-
-	// valid
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-
-	// db
-	runtimeOnly 'com.mysql:mysql-connector-j'
-
-	// lombok
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-
-	// test
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-	// jwt
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-
-	// aws s3
-	implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
-	implementation "com.amazonaws:aws-java-sdk-s3:1.12.281"
-
-	// swagger
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
-
-	// redis
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation 'org.apache.commons:commons-pool2'
-}
-
-tasks.named('test') {
-	useJUnitPlatform()
-	systemProperty "spring.profiles.active", "test"
-	systemProperty "spring.config.location", "classpath:/yaml/"
-	systemProperty "spring.config.name", "application,application-secret,application-test"
+	tasks.named('processResources', Copy) {
+		duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+		from('src/main/resources/yaml') {
+			include '**/*.yml'
+			into ''
+		}
+	}
 }
