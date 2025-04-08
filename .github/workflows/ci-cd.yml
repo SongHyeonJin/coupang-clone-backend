@@ -37,18 +37,18 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Preprocess resources
-        run: ./gradlew processResources
+        run: ./gradlew :api:processResources
 
       - name: Build and test with Gradle
-        run: ./gradlew clean build -x test
+        run: ./gradlew :api:clean :api:build -x test
 
       - name: Check built resources
         run: |
-          ls -al build/resources/main
-          cat build/resources/main/application-test.yml || echo "❌ NO application-test.yml"
+          ls -al api/build/resources/main
+          cat api/build/resources/main/application-test.yml || echo "❌ NO application-test.yml"
 
       - name: Check built JAR files
-        run: ls -alh build/libs
+        run: ls -alh api/build/libs
 
       - name: Save EC2 private key
         run: |
@@ -57,14 +57,14 @@ jobs:
 
       - name: Deploy JAR to EC2
         run: |
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no build/libs/*.jar \
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no api/build/libs/*.jar \
           ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/
 
       - name: Copy application.yml and application-prod.yml to EC2
         run: |
           scp -i ec2_key.pem -o StrictHostKeyChecking=no \
-          src/main/resources/yaml/application.yml \
-          src/main/resources/yaml/application-prod.yml \
+          api/src/main/resources/yaml/application.yml \
+          api/src/main/resources/yaml/application-prod.yml \
           ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USERNAME }}/
 
   deploy:
