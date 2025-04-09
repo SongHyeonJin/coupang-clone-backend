@@ -4,6 +4,10 @@ plugins {
     id 'java'
 }
 
+bootJar {
+    mainClass = 'com.example.coupangclone.CoupangcloneApplication'
+}
+
 dependencies {
     implementation project(':common')
     implementation project(':domain')
