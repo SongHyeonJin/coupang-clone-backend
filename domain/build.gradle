@@ -24,3 +24,11 @@ dependencies {
     // 테스트용으로 api 모듈 참조
     testImplementation project(':api')
 }
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}

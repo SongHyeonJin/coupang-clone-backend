@@ -11,3 +11,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+thread:
+  pool:
+    core-size: 10
+    max-size: 20
+    queue-capacity: 100
