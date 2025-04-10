@@ -37,9 +37,6 @@ class AdminItemServiceTest {
     @Autowired
     private BrandRepository brandRepository;
 
-    AdminItemServiceTest() {
-    }
-
     @AfterEach
     void tearDown() {
         brandRepository.deleteAllInBatch();
