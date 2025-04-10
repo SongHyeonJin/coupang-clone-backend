@@ -48,8 +48,17 @@ jacoco {
     toolVersion = "0.8.10"
 }
 
-jacocoTestReport {
-    dependsOn test
+tasks.named('test') {
+    useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test'
+    systemProperty 'spring.config.location', 'classpath:/yaml/'
+    systemProperty 'spring.config.name', 'application,application-secret,application-test'
+
+    finalizedBy 'jacocoTestReport'
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn 'test'
     reports {
         xml.required = true
         html.required = true

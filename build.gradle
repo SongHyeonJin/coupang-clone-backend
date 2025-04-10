@@ -44,13 +44,6 @@ subprojects {
 		testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	}
 
-	test {
-		useJUnitPlatform()
-		systemProperty 'spring.profiles.active', 'test'
-		systemProperty 'spring.config.location', 'classpath:/yaml/'
-		systemProperty 'spring.config.name', 'application,application-secret,application-test'
-	}
-
 	sourceSets {
 		main {
 			resources {
