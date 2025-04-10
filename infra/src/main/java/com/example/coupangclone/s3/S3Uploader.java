@@ -3,6 +3,8 @@ package com.example.coupangclone.s3;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.example.coupangclone.auth.S3UploadPort;
+import com.example.coupangclone.exception.ErrorException;
+import com.example.coupangclone.exception.ExceptionEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +23,15 @@ public class S3Uploader implements S3UploadPort {
     @Override
     public String upload(MultipartFile multipartFile) throws IOException {
         String originalFileName = multipartFile.getOriginalFilename();
+
+        if (originalFileName == null) {
+            throw new ErrorException(ExceptionEnum.IMAGE_FILENAME_NOT_FOUND);
+        }
+
+        if (!originalFileName.contains(".")) {
+            throw new ErrorException(ExceptionEnum.IMAGE_EXTENSION_MISSING);
+        }
+
         String fileExtension = getFileExtension(originalFileName);
 
         if (!isValidImageExtension(fileExtension)) {
