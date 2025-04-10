@@ -4,6 +4,16 @@ plugins {
     id 'java'
 }
 
+apply plugin: 'org.sonarqube'
+
+sonarqube {
+    properties {
+        property "sonar.sources", "src/main/java"
+        property "sonar.tests", ""
+        property "sonar.java.binaries", "build/classes/java/main"
+    }
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     // valid
