@@ -163,9 +163,9 @@ public class ItemService {
     }
 
     private void checkUser(User user) {
-        userRepository.findByEmail(user.getEmail()).orElseThrow(
-                () -> new ErrorException(ExceptionEnum.USER_NOT_FOUND)
-        );
+        if (!userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new ErrorException(ExceptionEnum.USER_NOT_FOUND);
+        }
     }
 
 }

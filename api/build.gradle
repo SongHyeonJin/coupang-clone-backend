@@ -1,7 +1,19 @@
 plugins {
     id 'org.springframework.boot' version '3.2.5'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'
     id 'java'
+}
+
+apply plugin: 'org.sonarqube'
+
+sonarqube {
+    properties {
+        property "sonar.sources", "src/main/java"
+        property "sonar.tests", "src/test/java"
+        property "sonar.java.binaries", "build/classes/java/main"
+        property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
+    }
 }
 
 bootJar {
@@ -30,4 +42,26 @@ dependencies {
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+}
+
+jacoco {
+    toolVersion = "0.8.10"
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test'
+    systemProperty 'spring.config.location', 'classpath:/yaml/'
+    systemProperty 'spring.config.name', 'application,application-secret,application-test'
+
+    finalizedBy 'jacocoTestReport'
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn 'test'
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
 }

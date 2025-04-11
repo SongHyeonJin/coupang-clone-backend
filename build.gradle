@@ -1,7 +1,16 @@
 plugins {
 	id 'org.springframework.boot' version '3.2.5' apply false
 	id 'io.spring.dependency-management' version '1.1.7'apply false
+	id "org.sonarqube" version "6.0.1.5171"
 	id 'java'
+}
+
+sonarqube {
+	properties {
+		property "sonar.projectKey", "coupang-clone"
+		property "sonar.host.url", "http://localhost:9000"
+		property "sonar.token", System.getenv("SONAR_TOKEN")
+	}
 }
 
 allprojects {
@@ -33,13 +42,6 @@ subprojects {
 		compileOnly 'org.projectlombok:lombok'
 		annotationProcessor 'org.projectlombok:lombok'
 		testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	}
-
-	test {
-		useJUnitPlatform()
-		systemProperty 'spring.profiles.active', 'test'
-		systemProperty 'spring.config.location', 'classpath:/yaml/'
-		systemProperty 'spring.config.name', 'application,application-secret,application-test'
 	}
 
 	sourceSets {
