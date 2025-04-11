@@ -82,6 +82,8 @@ jobs:
           script: |
             echo "[INFO] Writing multi-profile application-secret.yml..."
             
+            rm -f /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
+            
             echo "spring:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             echo "  config:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             echo "    activate:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
