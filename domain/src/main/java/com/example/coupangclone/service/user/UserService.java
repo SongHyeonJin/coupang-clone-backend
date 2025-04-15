@@ -1,5 +1,6 @@
 package com.example.coupangclone.service.user;
 
+import com.example.coupangclone.context.TokenHolder;
 import com.example.coupangclone.auth.JwtPort;
 import com.example.coupangclone.auth.RedisPort;
 import com.example.coupangclone.entity.user.User;
@@ -70,9 +71,10 @@ public class UserService {
         String accessToken = jwtPort.createAccessToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
         String refreshToken = jwtPort.createRefreshToken(user.getId());
 
-        redisPort.set("RT:" + user.getId(), refreshToken, 14, TimeUnit.DAYS);;
+        redisPort.set("RT:" + user.getId(), refreshToken, 14, TimeUnit.DAYS);
+        TokenHolder.set(accessToken, refreshToken);
 
-        return new LoginResult(user.getName(), accessToken, refreshToken);
+        return new LoginResult(user.getName());
     }
 
     @Transactional
