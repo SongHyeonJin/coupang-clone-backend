@@ -1,4 +1,4 @@
-package com.example.coupangclone.userdetails;
+package com.example.coupangclone.security.userdetails;
 
 import com.example.coupangclone.entity.user.User;
 import com.example.coupangclone.enums.UserRoleEnum;

@@ -7,7 +7,7 @@ import com.example.coupangclone.dto.item.SearchItemResponseDto;
 import com.example.coupangclone.result.ItemResult;
 import com.example.coupangclone.result.SearchItemResult;
 import com.example.coupangclone.service.item.ItemService;
-import com.example.coupangclone.userdetails.UserDetailsImpl;
+import com.example.coupangclone.security.userdetails.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
