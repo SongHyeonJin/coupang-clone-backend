@@ -4,6 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -24,6 +26,11 @@ public class LoggingInterceptor implements HandlerInterceptor {
         String traceId = MDC.get(TRACE_ID);
         String method = request.getMethod();
         String uri = request.getRequestURI();
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            MDC.put("userId", auth.getName());
+        }
 
         String logMessage;
 
