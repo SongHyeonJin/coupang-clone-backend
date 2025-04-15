@@ -1,6 +1,9 @@
 package com.example.coupangclone.context;
 
 public class TokenHolder {
+
+    private TokenHolder() {}
+
     private static final ThreadLocal<String> accessToken = new ThreadLocal<>();
     private static final ThreadLocal<String> refreshToken = new ThreadLocal<>();
 
