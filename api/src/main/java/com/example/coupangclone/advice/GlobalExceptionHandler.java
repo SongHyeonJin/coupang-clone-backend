@@ -1,7 +1,8 @@
-package com.example.coupangclone.exception;
+package com.example.coupangclone.advice;
 
 import com.example.coupangclone.dto.BasicResponseDto;
 import com.example.coupangclone.dto.ErrorResponseDto;
+import com.example.coupangclone.exception.ErrorException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
