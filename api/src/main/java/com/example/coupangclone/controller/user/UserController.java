@@ -27,7 +27,7 @@ public class UserController {
 
     @Operation(summary = "회원가입", description = "사용자가 회원가입을 합니다.")
     @PostMapping("/api/signup")
-    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequestDto requestDto) {
+    public ResponseEntity<UserResponseDto> signup(@Valid @RequestBody SignupRequestDto requestDto) {
         SignupResult result = userService.signup(requestDto.toCommand());
 
         return ResponseEntity.ok(new UserResponseDto(result.name(), "회원가입 성공"));
@@ -35,7 +35,7 @@ public class UserController {
 
     @Operation(summary = "로그인 (현재 관리자 아이디, 비밀번호를 예시로 입력되어있음)", description = "사용자가 로그인하여 JWT 토큰을 발급받습니다.")
     @PostMapping("/api/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDto requestDto) {
+    public ResponseEntity<UserResponseDto> login(@RequestBody LoginRequestDto requestDto) {
         LoginResult result = userService.login(requestDto.toCommand());
 
         return ResponseEntity.ok(new UserResponseDto(result.name(), "로그인 성공"));
@@ -43,7 +43,7 @@ public class UserController {
 
     @Operation(summary = "로그아웃 (엑세스, 리프레쉬 토큰 모두 상단에 넣어주세요)", description = "사용자가 로그아웃을 합니다.")
     @PostMapping("/api/logout")
-    public ResponseEntity<?> logout(
+    public ResponseEntity<BasicResponseDto> logout(
             @RequestHeader(JwtProvider.AUTHORIZATION_HEADER) String accessToken,
             @RequestHeader(JwtProvider.REFRESH_TOKEN_HEADER) String refreshToken
     ) {
