@@ -4,7 +4,7 @@ import com.example.coupangclone.auth.JwtPort;
 import com.example.coupangclone.enums.UserRoleEnum;
 import com.example.coupangclone.exception.ErrorException;
 import com.example.coupangclone.exception.ExceptionEnum;
-import com.example.coupangclone.userdetails.UserDetailsServiceImpl;
+import com.example.coupangclone.security.userdetails.UserDetailsServiceImpl;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;

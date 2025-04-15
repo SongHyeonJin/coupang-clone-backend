@@ -2,7 +2,7 @@ package com.example.coupangclone.controller;
 
 import com.example.coupangclone.controller.user.UserController;
 import com.example.coupangclone.dto.user.SignupRequestDto;
-import com.example.coupangclone.exception.GlobalExceptionHandler;
+import com.example.coupangclone.advice.GlobalExceptionHandler;
 import com.example.coupangclone.jwt.JwtProvider;
 import com.example.coupangclone.redis.RedisAdapter;
 import com.example.coupangclone.service.user.TokenService;

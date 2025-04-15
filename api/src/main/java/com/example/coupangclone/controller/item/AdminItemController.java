@@ -5,7 +5,7 @@ import com.example.coupangclone.dto.brand.BrandRequestDto;
 import com.example.coupangclone.dto.category.CategoryRequestDto;
 import com.example.coupangclone.result.CategoryResult;
 import com.example.coupangclone.service.item.AdminItemService;
-import com.example.coupangclone.userdetails.UserDetailsImpl;
+import com.example.coupangclone.security.userdetails.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

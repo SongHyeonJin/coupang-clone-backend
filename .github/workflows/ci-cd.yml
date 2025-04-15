@@ -2,7 +2,7 @@ name: Coupang Clone - CI/CD
 
 on:
   push:
-    branches: [ develop, main ]
+    branches: [ main ]
   pull_request:
     branches: [ develop, main ]
 
@@ -81,6 +81,8 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             echo "[INFO] Writing multi-profile application-secret.yml..."
+            
+            rm -f /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             
             echo "spring:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
             echo "  config:" >> /home/${{ secrets.EC2_USERNAME }}/application-secret.yml
