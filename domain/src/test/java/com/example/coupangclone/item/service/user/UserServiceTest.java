@@ -8,6 +8,7 @@ import com.example.coupangclone.enums.UserRoleEnum;
 import com.example.coupangclone.exception.ErrorException;
 import com.example.coupangclone.exception.ExceptionEnum;
 import com.example.coupangclone.jwt.JwtProvider;
+import com.example.coupangclone.context.TokenHolder;
 import com.example.coupangclone.repository.user.UserRepository;
 import com.example.coupangclone.result.LoginResult;
 import com.example.coupangclone.result.SignupResult;
@@ -17,11 +18,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -88,11 +84,13 @@ class UserServiceTest {
 
         // then
         assertThat(result.name()).isEqualTo(user.getName());
-        assertThat(result.accessToken()).isNotBlank();
-        assertThat(result.refreshToken()).isNotBlank();
+        assertThat(TokenHolder.getAccessToken()).isNotNull();
+        assertThat(TokenHolder.getRefreshToken()).isNotNull();
+
+        TokenHolder.clear();
     }
 
-    @DisplayName("이메일 틀림 → 로그인 실패")
+    @DisplayName("이메일 틀림 -> 로그인 실패")
     @Test
     void login_fail_wrongEmail() {
         // given
@@ -109,7 +107,7 @@ class UserServiceTest {
                 .hasMessage(ExceptionEnum.USER_NOT_FOUND.getMsg());
     }
 
-    @DisplayName("비밀번호 틀림 → 로그인 실패")
+    @DisplayName("비밀번호 틀림 -> 로그인 실패")
     @Test
     void login_fail_wrongPassword() {
         // given
