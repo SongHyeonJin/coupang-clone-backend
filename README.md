@@ -17,7 +17,7 @@ Spring Boot 기반의 쿠팡 이커머스 플랫폼 클론 백엔드 API 서버�
 | **Monitoring** | ELK Stack (Elasticsearch + Kibana), MDC 기반 요청 추적 |
 | **Code Quality** | SonarQube, JaCoCo |
 | **Documentation** | SpringDoc OpenAPI 3.0 (Swagger) |
-| **Testing** | JUnit 5, Mockito, MockMvc |
+| **Testing** | JUnit 5, AssertJ (Spring Boot Test 기반 통합 테스트) |
 
 ## Architecture
 
@@ -80,18 +80,10 @@ S3UploadPort     ──────────>  S3Uploader
 - 페이지네이션
 - 검색 로그 기반 **연관 키워드 추천**
 
-### 4. 리뷰 시스템
+### 4. 리뷰 (엔티티만 구현)
 
-- 별점 + 텍스트 리뷰
-- 리뷰 이미지 첨부
-- 상품별 평균 평점 집계
-
-### 5. 주문 / 장바구니 / 위시리스트 / 문의
-
-- 장바구니 상품 관리
-- 주문 및 주문 상품 관리
-- 위시리스트
-- 고객 문의 및 답변 (Inquiry / InquiryComment)
+- `Review`, `ReviewImage` 엔티티와 `ReviewRepository`만 존재합니다.
+- Service/Controller가 없어 API로는 아직 노출되지 않습니다.
 
 ## API Documentation
 
@@ -116,7 +108,9 @@ http://localhost:8080/swagger-ui.html
 
 ## Infrastructure
 
-### CI/CD Pipeline (GitHub Actions)
+### CI/CD Pipeline (GitHub Actions) — 현재 비활성화
+
+> EC2 인스턴스 중단으로 `.github/workflows/ci-cd.yml`의 파이프라인이 전체 주석 처리되어 있습니다. 아래는 EC2 운영 당시의 배포 구조입니다.
 
 ```
 Push to main
@@ -198,13 +192,9 @@ coupangclone/
 ├── domain/
 │   └── src/main/java/.../
 │       ├── entity/             # JPA 엔티티
-│       │   ├── user/           # User, Address
+│       │   ├── user/           # User
 │       │   ├── item/           # Item, Category, Brand, ItemImage, SearchLog
-│       │   ├── order/          # Order, OrderItem
-│       │   ├── review/         # Review, ReviewImage
-│       │   ├── cart/           # CartItem
-│       │   ├── wish/           # Wish
-│       │   └── inquriy/        # Inquiry, InquiryComment
+│       │   └── review/         # Review, ReviewImage (엔티티만, API 미구현)
 │       ├── service/            # 비즈니스 로직
 │       ├── repository/         # Spring Data JPA 리포지토리
 │       └── auth/               # Port 인터페이스 (JwtPort, RedisPort, S3UploadPort)
