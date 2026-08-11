@@ -138,6 +138,7 @@ public class ItemService {
                 .price(command.price())
                 .sale(command.sale())
                 .saleCnt(command.saleCnt())
+                .stockQuantity(command.stockQuantity())
                 .deliveryTime(command.deliveryTime())
                 .deliveryPrice(command.deliveryPrice())
                 .user(user)
