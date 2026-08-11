@@ -264,6 +264,7 @@ class ItemRepositoryTest {
                 .price(price)
                 .sale(sale)
                 .saleCnt(saleCnt)
+                .stockQuantity(100)
                 .deliveryTime(deliveryTime)
                 .deliveryPrice(deliveryPrice)
                 .user(user)

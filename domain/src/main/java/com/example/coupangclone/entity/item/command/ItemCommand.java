@@ -10,6 +10,7 @@ public record ItemCommand(
         int price,
         int sale,
         int saleCnt,
+        int stockQuantity,
         int deliveryTime,
         int deliveryPrice,
         Long categoryId,
