@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -38,6 +39,7 @@ public class OrderService {
         }
 
         List<OrderItem> orderItems = command.items().stream()
+                .sorted(Comparator.comparing(OrderItemCommand::itemId))
                 .map(this::toOrderItem)
                 .toList();
 
@@ -51,8 +53,14 @@ public class OrderService {
     public void cancelOrder(Long orderId, User user) {
         Order order = getOwnedOrder(orderId, user);
         order.cancel();
-        order.getOrderItems().forEach(orderItem ->
-                orderItem.getItem().increaseStock(orderItem.getQuantity()));
+
+        order.getOrderItems().stream()
+                .sorted(Comparator.comparing(orderItem -> orderItem.getItem().getId()))
+                .forEach(orderItem -> {
+                    Item item = itemRepository.findByIdForUpdate(orderItem.getItem().getId())
+                            .orElseThrow(() -> new ErrorException(ExceptionEnum.ITEM_NOT_FOUND));
+                    item.increaseStock(orderItem.getQuantity());
+                });
     }
 
     @Transactional(readOnly = true)
@@ -68,7 +76,7 @@ public class OrderService {
     }
 
     private OrderItem toOrderItem(OrderItemCommand itemCommand) {
-        Item item = itemRepository.findById(itemCommand.itemId())
+        Item item = itemRepository.findByIdForUpdate(itemCommand.itemId())
                 .orElseThrow(() -> new ErrorException(ExceptionEnum.ITEM_NOT_FOUND));
         item.decreaseStock(itemCommand.quantity());
 
