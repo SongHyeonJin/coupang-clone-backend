@@ -12,6 +12,7 @@ import com.example.coupangclone.repository.item.ItemRepository;
 import com.example.coupangclone.repository.order.OrderRepository;
 import com.example.coupangclone.repository.user.UserRepository;
 import com.example.coupangclone.result.OrderResult;
+import com.example.coupangclone.service.payment.PaymentService;
 import com.example.coupangclone.util.OrderMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,6 +30,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
     private final OrderRepository orderRepository;
+    private final PaymentService paymentService;
 
     @Transactional
     public OrderResult createOrder(OrderCommand command, User user) {
@@ -61,6 +63,11 @@ public class OrderService {
                             .orElseThrow(() -> new ErrorException(ExceptionEnum.ITEM_NOT_FOUND));
                     item.increaseStock(orderItem.getQuantity());
                 });
+
+        // ponytail: 외부 PG 호출은 순수 DB 검증/변경(주문취소, 재고복구)이 전부 성공한 뒤 마지막에 실행 —
+        // 커밋 직전 실패로 "결제는 취소됐는데 DB엔 반영 안 됨" 남는 창을 최소화. 완전히 없애려면
+        // 트랜잭션 밖으로 분리 + 아웃박스/재처리 필요 (실제 서비스로 키울 때 추가).
+        paymentService.cancelForOrder(order);
     }
 
     @Transactional(readOnly = true)

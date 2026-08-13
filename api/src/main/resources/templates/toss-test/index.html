@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Toss 테스트 결제 (Postman용 paymentKey 발급기)</title>
+</head>
+
+<body>
+  <h3>Postman 테스트용 paymentKey 발급기</h3>
+  <p>Postman으로 /api/orders 호출해서 받은 orderId/totalPrice를 아래에 넣고 결제하기를 누르면,<br>
+    토스 테스트 결제창이 뜹니다. 카드 결제 선택 후 아래 테스트 카드번호로 진행하세요.</p>
+
+  <div>
+    <label>주문 ID (orderId) 응답값 그대로: <input id="rawOrderId" value="1"></label><br><br>
+    <label>결제 금액 (totalPrice): <input id="amount" value="138800"></label><br><br>
+    <button id="pay-button">결제하기</button>
+  </div>
+
+  <hr>
+  <p>테스트 카드번호: 4330-0000-0000-0005 / 유효기간: 아무 미래 날짜 / 생년월일·비밀번호: 아무 값</p>
+
+  <script src="https://js.tosspayments.com/v1/payment"></script>
+  <script th:inline="javascript">
+    const clientKey = /*[[${clientKey}]]*/ "";
+    const tossPayments = TossPayments(clientKey);
+
+    document.getElementById("pay-button").addEventListener("click", function () {
+      const rawOrderId = document.getElementById("rawOrderId").value.trim();
+      const amount = Number(document.getElementById("amount").value);
+      const origin = window.location.origin;
+
+      tossPayments.requestPayment("카드", {
+        amount: amount,
+        orderId: "ORDER-" + rawOrderId,
+        orderName: "결제 테스트",
+        successUrl: origin + "/toss-test/success",
+        failUrl: origin + "/toss-test/fail",
+      });
+    });
+  </script>
+</body>
+
+</html>
