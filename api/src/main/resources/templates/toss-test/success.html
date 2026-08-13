@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>결제 성공 - 값 복사용</title></head>
+<body>
+  <h1 style="color:green">✅ 결제 성공</h1>
+  <h3>아래 값을 Postman의 /api/payments/confirm 요청 바디에 넣으세요.</h3>
+  <pre>{
+  "orderId": <span th:text="${orderId}"></span>,
+  "paymentKey": "<span th:text="${paymentKey}"></span>",
+  "amount": <span th:text="${amount}"></span>
+}</pre>
+</body>
+</html>

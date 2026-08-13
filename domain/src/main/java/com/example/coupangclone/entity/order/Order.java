@@ -39,7 +39,7 @@ public class Order extends Timestamped {
 
     private Order(User user) {
         this.user = user;
-        this.status = OrderStatus.PAID;
+        this.status = OrderStatus.PAYMENT_PENDING;
     }
 
     public static Order create(User user, List<OrderItem> orderItems) {
@@ -52,6 +52,13 @@ public class Order extends Timestamped {
         this.orderItems.add(orderItem);
         orderItem.assignOrder(this);
         this.totalPrice += orderItem.getPrice() * orderItem.getQuantity();
+    }
+
+    public void markAsPaid() {
+        if (this.status != OrderStatus.PAYMENT_PENDING) {
+            throw new ErrorException(ExceptionEnum.PAYMENT_NOT_ALLOWED);
+        }
+        this.status = OrderStatus.PAID;
     }
 
     public void cancel() {
