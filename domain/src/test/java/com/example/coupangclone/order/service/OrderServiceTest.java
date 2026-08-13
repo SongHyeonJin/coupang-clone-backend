@@ -66,7 +66,7 @@ class OrderServiceTest {
         OrderResult result = orderService.createOrder(command, user);
 
         // then
-        assertThat(result.status()).isEqualTo(OrderStatus.PAID.name());
+        assertThat(result.status()).isEqualTo(OrderStatus.PAYMENT_PENDING.name());
         assertThat(result.totalPrice()).isEqualTo(1060000 * 3);
         assertThat(result.items()).hasSize(1);
 
