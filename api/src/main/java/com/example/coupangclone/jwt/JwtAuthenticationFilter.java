@@ -1,5 +1,6 @@
 package com.example.coupangclone.jwt;
 
+import com.example.coupangclone.dto.ErrorResponseDto;
 import com.example.coupangclone.entity.user.User;
 import com.example.coupangclone.exception.ErrorException;
 import com.example.coupangclone.exception.ExceptionEnum;
@@ -7,13 +8,13 @@ import com.example.coupangclone.redis.RedisAdapter;
 import com.example.coupangclone.service.user.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,32 +45,52 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Claims info = jwtProvider.getUserInfoFromToken(token);
                 setAuthentication(info.getSubject());
             }
-        } catch (ExpiredJwtException e) {
-            String refreshToken = request.getHeader(JwtProvider.REFRESH_TOKEN_HEADER);
+        } catch (ErrorException e) {
+            if (e.getExceptionEnum() == ExceptionEnum.EXPIRED_TOKEN) {
+                String refreshToken = request.getHeader(JwtProvider.REFRESH_TOKEN_HEADER);
 
-            if (refreshToken != null) {
-                Claims claims = jwtProvider.getUserInfoFromToken(refreshToken);
-                String userId = claims.get("userId").toString();
-
-                User user = tokenService.verifyRefreshToken(refreshToken);
-                setAuthentication(user.getEmail());
-
-                String newAccessToken = jwtProvider.createAccessToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
-                response.setHeader(JwtProvider.AUTHORIZATION_HEADER, newAccessToken);
-
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-
-                String json = new ObjectMapper().writeValueAsString(
-                        Map.of("accessToken", newAccessToken)
-                );
-                response.getWriter().write(json);
-                return;
-            }else  {
-                    throw new ErrorException(ExceptionEnum.INVALID_TOKEN);
+                if (refreshToken != null) {
+                    if (renewAccessToken(refreshToken, response)) {
+                        return;
+                    }
+                    writeErrorResponse(response, ExceptionEnum.INVALID_TOKEN);
+                    return;
+                }
             }
+            writeErrorResponse(response, e.getExceptionEnum());
+            return;
         }
         filterChain.doFilter(request, response);
+    }
+
+    private boolean renewAccessToken(String refreshToken, HttpServletResponse response) throws IOException {
+        try {
+            User user = tokenService.verifyRefreshToken(refreshToken);
+            setAuthentication(user.getEmail());
+
+            String newAccessToken = jwtProvider.createAccessToken(user.getId(), user.getEmail(), user.getName(), user.getRole());
+            response.setHeader(JwtProvider.AUTHORIZATION_HEADER, newAccessToken);
+
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.setCharacterEncoding("UTF-8");
+
+            String json = new ObjectMapper().writeValueAsString(
+                    Map.of("accessToken", newAccessToken)
+            );
+            response.getWriter().write(json);
+            return true;
+        } catch (ErrorException e) {
+            return false;
+        }
+    }
+
+    private void writeErrorResponse(HttpServletResponse response, ExceptionEnum exceptionEnum) throws IOException {
+        response.setStatus(exceptionEnum.getStatus());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+
+        String json = new ObjectMapper().writeValueAsString(new ErrorResponseDto(exceptionEnum));
+        response.getWriter().write(json);
     }
 
     public void setAuthentication(String email) {
