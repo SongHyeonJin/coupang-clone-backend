@@ -8,12 +8,14 @@ import lombok.Getter;
 @Schema(description = "주문 상품 응답 DTO")
 public class OrderItemResponseDto {
 
+    private Long orderItemId;
     private Long itemId;
     private String itemName;
     private int price;
     private int quantity;
 
-    public OrderItemResponseDto(Long itemId, String itemName, int price, int quantity) {
+    public OrderItemResponseDto(Long orderItemId, Long itemId, String itemName, int price, int quantity) {
+        this.orderItemId = orderItemId;
         this.itemId = itemId;
         this.itemName = itemName;
         this.price = price;
@@ -21,6 +23,7 @@ public class OrderItemResponseDto {
     }
 
     public static OrderItemResponseDto from(OrderItemResult result) {
-        return new OrderItemResponseDto(result.itemId(), result.itemName(), result.price(), result.quantity());
+        return new OrderItemResponseDto(
+                result.orderItemId(), result.itemId(), result.itemName(), result.price(), result.quantity());
     }
 }

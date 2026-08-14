@@ -22,6 +22,7 @@ public class OrderMapper {
 
     private static OrderItemResult toItemResult(OrderItem orderItem) {
         return OrderItemResult.builder()
+                .orderItemId(orderItem.getId())
                 .itemId(orderItem.getItem().getId())
                 .itemName(orderItem.getItem().getName())
                 .price(orderItem.getPrice())

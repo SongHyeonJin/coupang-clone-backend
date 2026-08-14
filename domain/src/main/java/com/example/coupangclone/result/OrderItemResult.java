@@ -4,6 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record OrderItemResult(
+        Long orderItemId,
         Long itemId,
         String itemName,
         int price,
