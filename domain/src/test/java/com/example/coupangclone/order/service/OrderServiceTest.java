@@ -14,6 +14,9 @@ import com.example.coupangclone.repository.order.OrderRepository;
 import com.example.coupangclone.repository.user.UserRepository;
 import com.example.coupangclone.result.OrderResult;
 import com.example.coupangclone.service.order.OrderService;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,6 +45,8 @@ class OrderServiceTest {
     private OrderRepository orderRepository;
     @Autowired
     private OrderItemRepository orderItemRepository;
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
 
     @AfterEach
     void tearDown() {
@@ -242,6 +247,48 @@ class OrderServiceTest {
 
         // then
         assertThat(result.getContent()).hasSize(2);
+    }
+
+    @DisplayName("주문 목록 조회 시 주문 건수가 늘어나도 쿼리 수는 고정된다 (N+1 회귀 테스트).")
+    @Test
+    void getOrders_query_count_is_fixed_regardless_of_order_count() {
+        // given
+        User user = createUser("test@example.com");
+        userRepository.save(user);
+        Item item1 = createItem("노트북", 1200000, 1060000, 1000);
+        Item item2 = createItem("마우스", 30000, 25000, 1000);
+        itemRepository.save(item1);
+        itemRepository.save(item2);
+
+        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.setStatisticsEnabled(true);
+
+        createOrdersWithTwoItems(user, item1, item2, 3);
+        statistics.clear();
+
+        // when
+        // 페이지 크기(20)를 두 케이스의 주문 건수보다 항상 크게 잡아, Spring Data JPA의
+        // count 쿼리 생략 최적화(content.size() < pageSize)가 두 측정에서 동일하게 적용되도록 한다.
+        orderService.getOrders(PageRequest.of(0, 20), user);
+        long statementCountForThreeOrders = statistics.getPrepareStatementCount();
+
+        createOrdersWithTwoItems(user, item1, item2, 7);
+        statistics.clear();
+
+        orderService.getOrders(PageRequest.of(0, 20), user);
+        long statementCountForTenOrders = statistics.getPrepareStatementCount();
+
+        // then
+        assertThat(statementCountForTenOrders).isEqualTo(statementCountForThreeOrders);
+    }
+
+    private void createOrdersWithTwoItems(User user, Item item1, Item item2, int count) {
+        for (int i = 0; i < count; i++) {
+            orderService.createOrder(new OrderCommand(List.of(
+                    new OrderItemCommand(item1.getId(), 1),
+                    new OrderItemCommand(item2.getId(), 1)
+            )), user);
+        }
     }
 
     private User createUser(String email) {
