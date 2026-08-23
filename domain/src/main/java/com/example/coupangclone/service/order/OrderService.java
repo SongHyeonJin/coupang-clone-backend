@@ -64,7 +64,7 @@ public class OrderService {
                     item.increaseStock(orderItem.getQuantity());
                 });
 
-        // ponytail: 외부 PG 호출은 순수 DB 검증/변경(주문취소, 재고복구)이 전부 성공한 뒤 마지막에 실행 —
+        // 외부 PG 호출은 순수 DB 검증/변경(주문취소, 재고복구)이 전부 성공한 뒤 마지막에 실행 —
         // 커밋 직전 실패로 "결제는 취소됐는데 DB엔 반영 안 됨" 남는 창을 최소화. 완전히 없애려면
         // 트랜잭션 밖으로 분리 + 아웃박스/재처리 필요 (실제 서비스로 키울 때 추가).
         paymentService.cancelForOrder(order);
