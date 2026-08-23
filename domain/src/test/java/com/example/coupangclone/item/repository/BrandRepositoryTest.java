@@ -1,6 +1,7 @@
 package com.example.coupangclone.item.repository;
 
 import com.example.coupangclone.config.JpaAuditingConfig;
+import com.example.coupangclone.config.QuerydslConfig;
 import com.example.coupangclone.entity.item.Brand;
 import com.example.coupangclone.entity.user.User;
 import com.example.coupangclone.enums.UserRoleEnum;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("test")
 @DataJpaTest
-@Import(JpaAuditingConfig.class)
+@Import({JpaAuditingConfig.class, QuerydslConfig.class})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class BrandRepositoryTest {
 
