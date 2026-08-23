@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>결제 실패</title></head>
+<body>
+  <h1 style="color:red">❌ 결제 실패</h1>
+  <pre>code: <span th:text="${code}"></span>
+message: <span th:text="${message}"></span>
+orderId: <span th:text="${orderId}"></span></pre>
+</body>
+</html>

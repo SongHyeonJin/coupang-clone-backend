@@ -1,6 +1,7 @@
 package com.example.coupangclone.item.repository;
 
 import com.example.coupangclone.config.JpaAuditingConfig;
+import com.example.coupangclone.config.QuerydslConfig;
 import com.example.coupangclone.entity.item.SearchLog;
 import com.example.coupangclone.repository.item.SearchLogRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @ActiveProfiles("test")
 @DataJpaTest
-@Import(JpaAuditingConfig.class)
+@Import({JpaAuditingConfig.class, QuerydslConfig.class})
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class SearchLogRepositoryTest {
 

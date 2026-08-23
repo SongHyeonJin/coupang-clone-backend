@@ -5,8 +5,8 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://43.200.193.73:3306/coupang_clone_test?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: song
+    url: jdbc:mysql://localhost:3306/coupang_clone_test?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&createDatabaseIfNotExist=true
+    username: root
 
   jpa:
     hibernate:
@@ -15,6 +15,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 thread:
   pool:

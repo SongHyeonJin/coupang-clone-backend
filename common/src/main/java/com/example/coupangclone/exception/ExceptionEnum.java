@@ -21,7 +21,24 @@ public enum ExceptionEnum {
     BRAND_DUPLICATION(HttpStatus.BAD_REQUEST.value(), "이미 존재하는 브랜드입니다.", "ITEM"),
     IMAGE_REQUIRED(HttpStatus.BAD_REQUEST.value(), "이미지를 첨부해주세요.", "ITEM"),
     IMAGE_FILENAME_NOT_FOUND(HttpStatus.BAD_REQUEST.value(), "파일 이름이 존재하지 않습니다.", "ITEM"),
-    IMAGE_EXTENSION_MISSING(HttpStatus.BAD_REQUEST.value(), "확장자가 없는 파일은 업로드 할 수 없습니다.", "ITEM");
+    IMAGE_EXTENSION_MISSING(HttpStatus.BAD_REQUEST.value(), "확장자가 없는 파일은 업로드 할 수 없습니다.", "ITEM"),
+    ITEM_NOT_FOUND(HttpStatus.BAD_REQUEST.value(), "상품을 찾을 수 없습니다.", "ITEM"),
+    OUT_OF_STOCK(HttpStatus.BAD_REQUEST.value(), "재고가 부족합니다.", "ITEM"),
+    EMPTY_ORDER_ITEMS(HttpStatus.BAD_REQUEST.value(), "주문할 상품이 없습니다.", "ORDER"),
+    ORDER_NOT_FOUND(HttpStatus.BAD_REQUEST.value(), "주문을 찾을 수 없습니다.", "ORDER"),
+    ORDER_ACCESS_DENIED(HttpStatus.FORBIDDEN.value(), "본인의 주문만 조회할 수 있습니다.", "ORDER"),
+    ORDER_ALREADY_CANCELED(HttpStatus.BAD_REQUEST.value(), "이미 취소된 주문입니다.", "ORDER"),
+    ORDER_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST.value(), "배송이 시작된 주문은 취소할 수 없습니다.", "ORDER"),
+    ORDER_ITEM_NOT_FOUND(HttpStatus.BAD_REQUEST.value(), "주문 상품을 찾을 수 없습니다.", "ORDER"),
+    PAYMENT_AMOUNT_MISMATCH(HttpStatus.BAD_REQUEST.value(), "결제 금액이 주문 금액과 일치하지 않습니다.", "PAYMENT"),
+    PAYMENT_NOT_ALLOWED(HttpStatus.BAD_REQUEST.value(), "결제 대기 상태의 주문만 결제할 수 있습니다.", "PAYMENT"),
+    PAYMENT_FAILED(HttpStatus.BAD_REQUEST.value(), "결제 승인에 실패했습니다.", "PAYMENT"),
+    PAYMENT_NOT_FOUND(HttpStatus.BAD_REQUEST.value(), "결제 정보를 찾을 수 없습니다.", "PAYMENT"),
+    PAYMENT_CANCEL_FAILED(HttpStatus.BAD_REQUEST.value(), "결제 취소에 실패했습니다.", "PAYMENT"),
+    REVIEW_NOT_PURCHASED(HttpStatus.FORBIDDEN.value(), "구매한 상품만 리뷰를 작성할 수 있습니다.", "REVIEW"),
+    REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST.value(), "이미 리뷰를 작성한 상품입니다.", "REVIEW"),
+    REVIEW_NOT_FOUND(HttpStatus.BAD_REQUEST.value(), "리뷰를 찾을 수 없습니다.", "REVIEW"),
+    REVIEW_ACCESS_DENIED(HttpStatus.FORBIDDEN.value(), "본인의 리뷰만 삭제할 수 있습니다.", "REVIEW");
 
     private final int status;
     private final String msg;

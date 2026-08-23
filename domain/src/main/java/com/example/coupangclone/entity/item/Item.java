@@ -2,6 +2,8 @@ package com.example.coupangclone.entity.item;
 
 import com.example.coupangclone.entity.base.Timestamped;
 import com.example.coupangclone.entity.user.User;
+import com.example.coupangclone.exception.ErrorException;
+import com.example.coupangclone.exception.ExceptionEnum;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -35,6 +37,9 @@ public class Item extends Timestamped {
     private Integer saleCnt;
 
     @Column(nullable = false)
+    private Integer stockQuantity;
+
+    @Column(nullable = false)
     private Integer deliveryTime;
 
     @Column(nullable = false)
@@ -55,7 +60,7 @@ public class Item extends Timestamped {
     private Brand brand;
 
     @Builder
-    public Item(String name, int weight, String content, int price, int sale, int saleCnt,
+    public Item(String name, int weight, String content, int price, int sale, int saleCnt, int stockQuantity,
                 int deliveryTime, int deliveryPrice, User user, Category category, Brand brand) {
         this.name = name;
         this.weight = weight;
@@ -63,11 +68,23 @@ public class Item extends Timestamped {
         this.price = price;
         this.sale = sale;
         this.saleCnt = saleCnt;
+        this.stockQuantity = stockQuantity;
         this.deliveryTime = deliveryTime;
         this.deliveryPrice = deliveryPrice;
         this.user = user;
         this.category = category;
         this.brand = brand;
+    }
+
+    public void decreaseStock(int quantity) {
+        if (this.stockQuantity < quantity) {
+            throw new ErrorException(ExceptionEnum.OUT_OF_STOCK);
+        }
+        this.stockQuantity -= quantity;
+    }
+
+    public void increaseStock(int quantity) {
+        this.stockQuantity += quantity;
     }
 
 }

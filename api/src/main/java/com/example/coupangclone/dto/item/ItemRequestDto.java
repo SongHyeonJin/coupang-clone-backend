@@ -29,6 +29,9 @@ public class ItemRequestDto {
     @Schema(description = "판매 수량", example = "1")
     private int saleCnt;
 
+    @Schema(description = "재고 수량", example = "100")
+    private int stockQuantity;
+
     @Schema(description = "배송 소요 시간 (일 단위)", example = "1")
     private int deliveryTime;
 
@@ -42,7 +45,7 @@ public class ItemRequestDto {
     private Long brandId;
 
     @Builder
-    public ItemRequestDto(String name, int weight, String content, int price, int sale, int saleCnt,
+    public ItemRequestDto(String name, int weight, String content, int price, int sale, int saleCnt, int stockQuantity,
                           int deliveryTime, int deliveryPrice, Long categoryId, Long brandId) {
         this.name = name;
         this.weight = weight;
@@ -50,6 +53,7 @@ public class ItemRequestDto {
         this.price = price;
         this.sale = sale;
         this.saleCnt = saleCnt;
+        this.stockQuantity = stockQuantity;
         this.deliveryTime = deliveryTime;
         this.deliveryPrice = deliveryPrice;
         this.categoryId = categoryId;
@@ -64,6 +68,7 @@ public class ItemRequestDto {
                 price,
                 sale,
                 saleCnt,
+                stockQuantity,
                 deliveryTime,
                 deliveryPrice,
                 categoryId,

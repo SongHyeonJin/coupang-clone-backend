@@ -3,7 +3,6 @@ package com.example.coupangclone.service.item;
 import com.example.coupangclone.auth.S3UploadPort;
 import com.example.coupangclone.entity.item.command.ItemCommand;
 import com.example.coupangclone.repository.item.*;
-import com.example.coupangclone.repository.review.ReviewRepository;
 import com.example.coupangclone.repository.user.UserRepository;
 import com.example.coupangclone.dto.BasicResponseDto;
 import com.example.coupangclone.entity.item.Brand;
@@ -41,7 +40,6 @@ public class ItemService {
     private final ItemImageRepository itemImageRepository;
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
-    private final ReviewRepository reviewRepository;
     private final SearchLogRepository searchLogRepository;
     private final SearchLogService searchLogService;
     private final S3UploadPort s3Uploader;
@@ -88,19 +86,7 @@ public class ItemService {
                 Sort.by(sortType.getDirection(), sortType.getProperty())
         );
 
-        Page<Item> itemPage = itemRepository.findAll(sortedPageable);
-
-        return itemPage.map(item -> {
-            String imageUrl = itemImageRepository.findFirstByItemId(item.getId())
-                    .map(ItemImage::getImage)
-                    .orElse(null);
-
-            double reviewRating = reviewRepository.sumRatingByItemId(item.getId());
-            long reviewCnt = reviewRepository.countByItemId(item.getId());
-            double reviewAvgRating = reviewCnt == 0 ? 0.0 : reviewRating / reviewCnt;
-
-            return ItemMapper.toResult(item, imageUrl, reviewAvgRating, reviewCnt);
-        });
+        return itemRepository.findItemList(null, sortedPageable).map(this::toItemResult);
     }
 
     @Transactional(readOnly = true)
@@ -113,21 +99,13 @@ public class ItemService {
 
         List<String> relatedKeywords = searchLogService.getRelatedKeywordsFor(keyword);
 
-        Page<Item> itemPage = itemRepository.searchByNameOrBrand(keyword, pageable);
+        Page<ItemResult> itemResults = itemRepository.findItemList(keyword, pageable).map(this::toItemResult);
 
-        Page<ItemResult> itemResults = itemPage.map(item -> {
-            String imageUrl = itemImageRepository.findFirstByItemId(item.getId())
-                    .map(ItemImage::getImage)
-                    .orElse(null);
+        return new SearchItemResult(itemResults, relatedKeywords);
+    }
 
-            double reviewRating = reviewRepository.sumRatingByItemId(item.getId());
-            long reviewCnt = reviewRepository.countByItemId(item.getId());
-            double reviewAvgRating = reviewCnt == 0 ? 0.0 : reviewRating / reviewCnt;
-
-            return ItemMapper.toResult(item, imageUrl, reviewAvgRating, reviewCnt);
-        });
-
-        return  new SearchItemResult(itemResults, relatedKeywords);
+    private ItemResult toItemResult(ItemListRow row) {
+        return ItemMapper.toResult(row.item(), row.imageUrl(), row.avgRatingOrZero(), row.reviewCntOrZero());
     }
 
     private static Item addItem(ItemCommand command, User user, Category category, Brand brand) {
@@ -138,6 +116,7 @@ public class ItemService {
                 .price(command.price())
                 .sale(command.sale())
                 .saleCnt(command.saleCnt())
+                .stockQuantity(command.stockQuantity())
                 .deliveryTime(command.deliveryTime())
                 .deliveryPrice(command.deliveryPrice())
                 .user(user)

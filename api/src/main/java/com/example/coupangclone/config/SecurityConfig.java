@@ -30,6 +30,8 @@ public class SecurityConfig {
     private static final String[] PERMIT_URL_ARRAY = {
             "/api/signup",
             "/api/login",
+            "/toss-test",
+            "/toss-test/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",

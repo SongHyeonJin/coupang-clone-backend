@@ -16,6 +16,9 @@ import com.example.coupangclone.service.item.ItemService;
 import com.example.coupangclone.service.item.SearchLogService;
 import com.example.coupangclone.repository.item.*;
 import com.example.coupangclone.repository.user.UserRepository;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -63,6 +66,8 @@ class ItemServiceTest {
     private S3UploadPort s3Uploader;
     @Autowired
     private SearchLogService searchLogService;
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
     @TestConfiguration
     static class TestS3Config {
         @Bean
@@ -634,6 +639,87 @@ class ItemServiceTest {
         assertThat(result.relatedKeywords()).containsExactlyInAnyOrder("노트북", "노트북pro");
     }
 
+    @DisplayName("브랜드가 없는 상품도 상품명 검색 결과에서 누락되지 않는다.")
+    @Test
+    void searchItems_includes_item_without_brand() {
+        // given
+        User user = createUser("test@example.com", "qwer123!", "김서방", "01043215678", "남성");
+        Category category = createCategory("전자제품", ItemTypeEnum.THING, null);
+        userRepository.save(user);
+        categoryRepository.save(category);
+
+        ItemCommand command = ItemCommand.builder()
+                .name("노트북")
+                .weight(0)
+                .content("정품입니다.")
+                .price(1200000)
+                .sale(1060000)
+                .saleCnt(1)
+                .stockQuantity(100)
+                .deliveryTime(1)
+                .deliveryPrice(0)
+                .categoryId(category.getId())
+                .brandId(null)
+                .build();
+        Item item = createItem(command, user, category, null);
+        itemRepository.save(item);
+
+        // when
+        SearchItemResult result = itemService.searchItems("노트북", PageRequest.of(0, 5), user);
+
+        // then
+        assertThat(result.items().getContent()).hasSize(1);
+        assertThat(result.items().getContent().get(0).name()).contains("노트북");
+    }
+
+    @DisplayName("상품 목록 조회 시 상품 건수가 늘어나도 쿼리 수는 고정된다 (N+1 회귀 테스트).")
+    @Test
+    void getItems_query_count_is_fixed_regardless_of_item_count() {
+        // given
+        User user = createUser("test@example.com", "qwer123!", "김서방", "01043215678", "남성");
+        Category category = createCategory("전자제품", ItemTypeEnum.THING, null);
+        Brand brand = createBrand("삼성");
+        userRepository.save(user);
+        categoryRepository.save(category);
+        brandRepository.save(brand);
+
+        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        statistics.setStatisticsEnabled(true);
+
+        createItemsWithImage(3, user, category, brand);
+        statistics.clear();
+
+        // when
+        // 페이지 크기(20)를 두 케이스의 상품 건수보다 항상 크게 잡아 count 쿼리 생략 최적화가
+        // 두 측정에서 동일하게 적용되도록 한다 (OrderServiceTest의 회귀 테스트와 같은 이유).
+        itemService.getItems(PageRequest.of(0, 20), user, "");
+        long statementCountForThreeItems = statistics.getPrepareStatementCount();
+
+        createItemsWithImage(7, user, category, brand);
+        statistics.clear();
+
+        itemService.getItems(PageRequest.of(0, 20), user, "");
+        long statementCountForTenItems = statistics.getPrepareStatementCount();
+
+        // then
+        assertThat(statementCountForTenItems).isEqualTo(statementCountForThreeItems);
+    }
+
+    private void createItemsWithImage(int count, User user, Category category, Brand brand) {
+        for (int i = 0; i < count; i++) {
+            ItemCommand command = createItemDto(
+                    "상품" + i, 0, "설명", 10000, 9000, 1, 1, 0, category.getId(), brand.getId());
+            Item item = createItem(command, user, category, brand);
+            itemRepository.save(item);
+
+            ItemImage itemImage = ItemImage.builder()
+                    .image("https://example.com/" + i + ".jpg")
+                    .item(item)
+                    .build();
+            itemImageRepository.save(itemImage);
+        }
+    }
+
     private User createUser(String email, String password, String name, String tel, String gender) {
         return User.builder()
                 .email(email)
@@ -667,6 +753,7 @@ class ItemServiceTest {
                 .price(command.price())
                 .sale(command.sale())
                 .saleCnt(command.saleCnt())
+                .stockQuantity(command.stockQuantity())
                 .deliveryTime(command.deliveryTime())
                 .deliveryPrice(command.deliveryPrice())
                 .user(user)
@@ -684,6 +771,7 @@ class ItemServiceTest {
                 .price(price)
                 .sale(sale)
                 .saleCnt(saleCnt)
+                .stockQuantity(100)
                 .deliveryTime(deliveryTime)
                 .deliveryPrice(deliveryPrice)
                 .categoryId(categoryId)

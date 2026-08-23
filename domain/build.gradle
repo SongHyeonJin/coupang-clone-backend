@@ -33,8 +33,32 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
+    // QueryDSL
+    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
+    annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+    annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
+    annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
+
     // 테스트용으로 api 모듈 참조
     testImplementation project(':api')
+}
+
+def querydslDir = 'src/main/generated'
+
+sourceSets {
+    main {
+        java {
+            srcDirs += querydslDir
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.generatedSourceOutputDirectory = file(querydslDir)
+}
+
+clean {
+    delete file(querydslDir)
 }
 
 bootJar {
