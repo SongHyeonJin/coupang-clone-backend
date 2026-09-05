@@ -40,4 +40,13 @@ public class AdminItemController {
         return ResponseEntity.ok(BasicResponseDto.addSuccess("브랜드 등록이 완료되었습니다."));
     }
 
+    @Operation(summary = "상품 평점/리뷰 수 백필 (ADMIN 전용)",
+            description = "리뷰 반정규화(reviewCount/ratingSum) 도입 전에 쌓인 리뷰를 기준으로 전체 상품의 값을 다시 채웁니다. "
+                    + "절대값으로 SET하므로 몇 번을 다시 호출해도 결과가 같습니다. 배포 직후 한 번만 호출하면 됩니다.")
+    @PostMapping("/review-stats/backfill")
+    public ResponseEntity<?> backfillReviewStats(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+        adminItemService.backfillReviewStats(userDetails.getUser());
+        return ResponseEntity.ok(BasicResponseDto.addSuccess("상품 평점/리뷰 수 백필이 완료되었습니다."));
+    }
+
 }
