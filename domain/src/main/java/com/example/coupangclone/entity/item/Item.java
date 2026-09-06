@@ -47,6 +47,13 @@ public class Item extends Timestamped {
 
     private Boolean isDeleted = false;
 
+    @Column(nullable = false)
+    private Integer reviewCount = 0;
+
+    // 평균이 아닌 총합을 저장한다. 평균만 저장하면 리뷰 수정/삭제 시 역산이 필요해 오차가 누적된다.
+    @Column(nullable = false)
+    private Double ratingSum = 0.0;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
@@ -85,6 +92,10 @@ public class Item extends Timestamped {
 
     public void increaseStock(int quantity) {
         this.stockQuantity += quantity;
+    }
+
+    public double averageRating() {
+        return reviewCount == 0 ? 0.0 : ratingSum / reviewCount;
     }
 
 }

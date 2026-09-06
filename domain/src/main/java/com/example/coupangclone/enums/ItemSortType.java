@@ -5,7 +5,9 @@ import org.springframework.data.domain.Sort;
 public enum ItemSortType {
     CREATED_AT_DESC("createdAt", Sort.Direction.DESC),
     PRICE_ASC("sale", Sort.Direction.ASC),
-    PRICE_DESC("sale", Sort.Direction.DESC);
+    PRICE_DESC("sale", Sort.Direction.DESC),
+    RATING_DESC("rating", Sort.Direction.DESC),
+    RATING_ASC("rating", Sort.Direction.ASC);
 
     private final String property;
     private final Sort.Direction direction;
