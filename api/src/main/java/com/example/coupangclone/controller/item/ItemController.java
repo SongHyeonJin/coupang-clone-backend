@@ -41,7 +41,7 @@ public class ItemController {
         return ResponseEntity.ok(BasicResponseDto.addSuccess("상품 등록이 완료되었습니다."));
     }
 
-    @Operation(summary = "상품 전체 조회", description = "정렬 조건에 따라 전체 상품 목록을 페이징 조회합니다. (sort를 arg1 쪽 sort에 넣어야 제대로 동작. 예: 'createdAt', 'price_desc', 'price_asc')")
+    @Operation(summary = "상품 전체 조회", description = "정렬 조건에 따라 전체 상품 목록을 페이징 조회합니다. (sort를 arg1 쪽 sort에 넣어야 제대로 동작. 예: 'createdAt', 'price_desc', 'price_asc', 'rating_desc', 'rating_asc')")
     @GetMapping
     public ResponseEntity<Page<ItemResponseDto>> getItems(@RequestParam(name = "sort", defaultValue = "createdAt") String sort,
                                                           @PageableDefault(size = 10) Pageable pageable,

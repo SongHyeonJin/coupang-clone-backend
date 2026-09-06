@@ -4,6 +4,7 @@ import com.example.coupangclone.entity.item.Item;
 import com.example.coupangclone.entity.order.Order;
 import com.example.coupangclone.entity.order.command.OrderCommand;
 import com.example.coupangclone.entity.order.command.OrderItemCommand;
+import com.example.coupangclone.entity.review.Review;
 import com.example.coupangclone.entity.review.command.ReviewUpdateCommand;
 import com.example.coupangclone.entity.review.command.ReviewWriteCommand;
 import com.example.coupangclone.entity.user.User;
@@ -270,6 +271,80 @@ class ReviewServiceTest {
                 .hasMessage(ExceptionEnum.REVIEW_ACCESS_DENIED.getMsg());
 
         assertThat(reviewRepository.count()).isEqualTo(1);
+    }
+
+    @DisplayName("리뷰 작성 시 상품의 reviewCount/ratingSum이 갱신된다.")
+    @Test
+    void writeReview_updatesItemReviewStats() {
+        // given
+        User user = createUser("buyer@example.com");
+        Item item = createItem("노트북", 1200000, 1060000, 10);
+        userRepository.save(user);
+        itemRepository.save(item);
+        Long orderItemId = orderAndPay(user, item);
+
+        // when
+        reviewService.writeReview(ReviewWriteCommand.builder()
+                .orderItemId(orderItemId).content("좋아요").rating(4.0).build(), user);
+
+        // then
+        Item updated = itemRepository.findById(item.getId()).orElseThrow();
+        assertThat(updated.getReviewCount()).isEqualTo(1);
+        assertThat(updated.getRatingSum()).isEqualTo(4.0);
+        assertThat(updated.averageRating()).isEqualTo(4.0);
+    }
+
+    @DisplayName("리뷰 수정 시 reviewCount는 그대로이고 ratingSum만 평점 변화분만큼 재계산된다.")
+    @Test
+    void updateReview_recalculatesRatingSum() {
+        // given
+        User user = createUser("buyer@example.com");
+        Item item = createItem("노트북", 1200000, 1060000, 10);
+        userRepository.save(user);
+        itemRepository.save(item);
+        Long orderItemId = orderAndPay(user, item);
+
+        ReviewResult review = reviewService.writeReview(ReviewWriteCommand.builder()
+                .orderItemId(orderItemId).content("처음 리뷰").rating(3.0).build(), user);
+
+        // when
+        reviewService.updateReview(review.reviewId(),
+                ReviewUpdateCommand.builder().content("다시 써보니 더 좋아요").rating(5.0).build(), user);
+
+        // then
+        Item updated = itemRepository.findById(item.getId()).orElseThrow();
+        assertThat(updated.getReviewCount()).isEqualTo(1);
+        assertThat(updated.getRatingSum()).isEqualTo(5.0);
+
+        // Item 통계 벌크 UPDATE(clearAutomatically)가 같은 트랜잭션의 리뷰 자체 수정 내용을
+        // 날려버리지 않는지, 캐시된 반환값이 아닌 DB 재조회로 직접 검증한다.
+        Review persisted = reviewRepository.findById(review.reviewId()).orElseThrow();
+        assertThat(persisted.getContent()).isEqualTo("다시 써보니 더 좋아요");
+        assertThat(persisted.getRating()).isEqualTo(5.0);
+    }
+
+    @DisplayName("리뷰 삭제 시 reviewCount/ratingSum이 감소하고 리뷰가 없으면 0 밑으로 내려가지 않는다.")
+    @Test
+    void deleteReview_decrementsItemReviewStats() {
+        // given
+        User user = createUser("buyer@example.com");
+        Item item = createItem("노트북", 1200000, 1060000, 10);
+        userRepository.save(user);
+        itemRepository.save(item);
+        Long orderItemId = orderAndPay(user, item);
+
+        ReviewResult review = reviewService.writeReview(ReviewWriteCommand.builder()
+                .orderItemId(orderItemId).content("리뷰").rating(4.0).build(), user);
+
+        // when
+        reviewService.deleteReview(review.reviewId(), user);
+
+        // then
+        Item updated = itemRepository.findById(item.getId()).orElseThrow();
+        assertThat(updated.getReviewCount()).isEqualTo(0);
+        assertThat(updated.getRatingSum()).isEqualTo(0.0);
+        assertThat(updated.averageRating()).isEqualTo(0.0);
+        assertThat(reviewRepository.count()).isEqualTo(0);
     }
 
     @DisplayName("상품 리뷰 요약은 평균 평점과 리뷰 개수를 계산한다.")
